@@ -1,6 +1,7 @@
 #include "Actuator.h"
 #include "AudioControl.h"
 #include "JsonHandler.h"
+#include "Forwarder.hpp"
 
 sem_t g_warnShowSem;
 
@@ -9,7 +10,7 @@ std::mutex Actuator::m_mtxMsgListen;
 
 Actuator::Actuator() : m_xmlManager(XmlManager::GetInstance())
 {
-    /*while*/if ((this->m_fdShareMemMcuData = shm_open(MCU_DATA_SHARED, O_RDWR, S_IRWXU)) == -1)
+    /*while*/ if ((this->m_fdShareMemMcuData = shm_open(MCU_DATA_SHARED, O_RDWR, S_IRWXU)) == -1)
     {
         ErrPrint("Failed to open shared data [%s]!\n", MCU_DATA_SHARED);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -18,15 +19,12 @@ Actuator::Actuator() : m_xmlManager(XmlManager::GetInstance())
     this->m_pShareMemMcuData = (shem_t *)mmap(0, sizeof(shem_t), PROT_READ | PROT_WRITE,
                                               MAP_SHARED, m_fdShareMemMcuData, 0);
 
-    std::string strMqttHostName = "localhost";
-    int iMqttHostPort = 1883;
-    ActuatorMqttInit(strMqttHostName, iMqttHostPort);
-    // sem_init(&g_warnShowSem, 0, 0);
+    m_mqttClient = std::make_shared<MqttConnection>(MQTT_HOST, MQTT_PORT, BDSTAR_MOSQUITTP);
 
-    // if (WarnShowTimerInit() != EOK)
-    // {
-    //     exit(1);
-    // }
+    std::vector<std::string> strTopicList;
+    strTopicList.emplace_back(std::string(MQTT_TOPIC_WARN_VIEW));
+    m_mqttClient->Subscribe(strTopicList);
+    m_mqttClient->Run();
 }
 
 Actuator::~Actuator()
@@ -38,78 +36,12 @@ Actuator::~Actuator()
         shm_unlink(MCU_DATA_SHARED);
         WarnShowTimerDelete();
     }
-
-    if (_connected)
-    {
-        mosquitto_lib_cleanup();
-        mosquitto_destroy(_mosq);
-    }
 }
 
-void Actuator::ActuatorMqttInit(const std::string &host, const int port)
+void Actuator::Run()
 {
-    _host = host;
-    _port = port;
-
-    // init subscribe struct
-    _mosq = mosquitto_new(nullptr, true, nullptr);
-    if (mosquitto_connect(_mosq, _host.c_str(), _port, _keep_alive) != MOSQ_ERR_SUCCESS)
-    {
-        std::cerr << "connect error!!" << std::endl;
-        _connected = false;
-        exit(-1);
-    }
-    else
-    {
-        _connected = true;
-    }
-    std::cout << "subscribe init finished" << std::endl;
-
-    // init recive callback
-    mosquitto_lib_init();
-
-    auto register_callback = [=] {
-        mosquitto_subscribe_callback(
-            &Actuator::ActuatorMqttCallBack, NULL,
-            "MessageHandler/#", 0,
-            _host.c_str(), _port,
-            NULL, 60, true,
-            NULL, NULL,
-            NULL, NULL);
-        // this api can not return??
-    };
-    std::thread register_callback_thread(register_callback);
-    register_callback_thread.detach();
-    std::cout << "finished callback init" << std::endl;
-}
-
-int Actuator::ActuatorMqttCallBack(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *msg)
-{
-    std::cout << "FROM topic: " << msg->topic << std::endl;
-    std::string strWarnMsg = (const char *)msg->payload;
-    std::cout << "GOT message:\n"
-              << strWarnMsg << std::endl;
-
-    std::lock_guard<std::mutex> lockGuard(m_mtxMsgListen);
-    if (!strWarnMsg.empty())
-    {
-        InfoPrint("Recieve Warning Message From CORE:[%s]\r\n", strWarnMsg.c_str());
-        std::string strViewName, strExtraInfo, strViewStatus;
-        JsonHandler::GetInstance()->WarnMsgParse(strWarnMsg, strViewName, strExtraInfo, strViewStatus);
-        if (!strViewName.empty() &&
-            !strExtraInfo.empty() &&
-            !strViewStatus.empty())
-        {
-           Actuator::m_msgHandler->SetWarnView(strViewName.c_str(),
-                                            strExtraInfo.c_str(), strViewStatus.compare("ON") == 0 ? VIEW_ON : VIEW_OFF);
-        }
-    }
-
-    return 0;
-}
-
-void Actuator::run()
-{
+    std::thread msgRecieveTh(std::bind(&Actuator::MsgReciever, this));
+    msgRecieveTh.detach();
     // m_msgHandler->start();
 
     // pthread_mutex_lock(&m_pShareMemMcuData->myshmemmutex);
@@ -124,6 +56,25 @@ void Actuator::run()
         // m_msgHandler->RemoveCurrentWarn();
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
+}
+
+
+void Actuator::MsgReciever()
+{
+    while (1)
+    {
+        std::string strMsg = Forwarder::GetInstance()->MsgPop();
+        if (!strMsg.empty())
+        {
+            MsgProcessor(strMsg);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
+
+void Actuator::MsgProcessor(std::string strMsg)
+{
+    InfoPrint("Message:[%s] Comming\r\n", strMsg.c_str());
 }
 
 void Actuator::InitAllWarnInfo(bool isIgnOFF)

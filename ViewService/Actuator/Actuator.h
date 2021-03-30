@@ -19,12 +19,12 @@
 #include "Singleton.hpp"
 #include "XmlManager.h"
 #include "MsgHandler.h"
+#include "MqttConnection.hpp"
 
 #define MQ_SERVER_NAME "/VIEW_ACTUAL_QUEU"
 
 class Actuator : public Singleton<Actuator>, public Thread
 {
-    // friend class Singleton<Actuator>;
 public:
     Actuator();
     ~Actuator();
@@ -38,7 +38,10 @@ protected:
     int WarnShowTimerDelete();
 
 private:
-    void run();
+    void Run();
+    void MsgReciever();
+    void MsgProcessor(std::string strMsg);
+
     void InitAllWarnInfo(bool isIgnOFF = false);
 
     void InitSomeSeriousWarn();
@@ -75,23 +78,12 @@ private:
     timer_t m_timerId;
 
     XmlManager *m_xmlManager;
-    
+
     static MsgHandler *m_msgHandler;
 
     static std::mutex m_mtxMsgListen;
 
-private:
-    void ActuatorMqttInit(const std::string &host, const int port);
-
-    static int ActuatorMqttCallBack(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *msg);
-
-    struct mosquitto *_mosq = nullptr;
-    std::string _host;
-    int _port;
-    int _keep_alive = 60;
-    bool _connected = false;
-    std::string _mesg_pub_topic = "MessageHandler/publish";
-    std::string _mesg_cb_topic = "MessageHandler/call_back";
+    std::shared_ptr<BaseConnection> m_mqttClient = NULL;
 };
 
 #endif // !_ACTUATOR_H_

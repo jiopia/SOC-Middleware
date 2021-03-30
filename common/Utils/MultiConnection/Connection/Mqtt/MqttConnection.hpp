@@ -6,7 +6,7 @@
 #include "BaseConnection.hpp"
 #include "Forwarder.hpp"
 
-#define MQTT_HOST "localhost"
+#define MQTT_HOST "127.0.0.1"
 #define MQTT_PORT 1883
 
 #define PUB_QOS 1
@@ -21,14 +21,15 @@ public:
     MqttConnection(string host, int port, ConnectType type);
     ~MqttConnection();
 
-    void Init();
-    void Run();
-    void Connect();
-    void DisConnect();
-    void MsgRecieve();
-    void MsgSend(std::string strTopic, std::string strMsg);
+    virtual void Init();
+    virtual void Run();
+    virtual void Connect();
+    virtual void DisConnect();
+    virtual void MsgRecieve();
+    virtual void MsgSend(std::string strMsg) {}
+    virtual void MsgSend(std::string strTopic, std::string strMsg);
 
-    void Subscribe(std::vector<string> &strTopicList);
+    virtual void Subscribe(std::vector<std::string> &strTopicList);
     void UnSubscribe(std::vector<string> &strTopicList);
 
 private:

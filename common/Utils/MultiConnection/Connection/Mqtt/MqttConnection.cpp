@@ -84,20 +84,20 @@ void MqttConnection::MsgSend(std::string strTopic, std::string strMsg)
     mosquitto_publish(this->m_ptrMosq, NULL, strTopic.c_str(), strMsg.length(), (void *)strMsg.c_str(), 1, false);
 }
 
-void MqttConnection::Subscribe(std::vector<string> &strTopicList)
+void MqttConnection::Subscribe(std::vector<std::string> &strTopicList)
 {
-    for (auto iter = strTopicList; iter != strTopicList.end(); iter++)
+    for (auto iter = strTopicList.begin(); iter != strTopicList.end(); iter++)
     {
-        std::string strTopic = iter;
+        std::string strTopic = *iter;
         mosquitto_subscribe(this->m_ptrMosq, &this->m_mid, strTopic.c_str(), SUB_QOS);
     }
 }
 
-void MqttConnection::UnSubscribe(std::vector<string> &strTopicList)
+void MqttConnection::UnSubscribe(std::vector<std::string> &strTopicList)
 {
-    for (auto iter = strTopicList; iter != strTopicList.end(); iter++)
+    for (auto iter = strTopicList.begin(); iter != strTopicList.end(); iter++)
     {
-        std::string strTopic = iter;
+        std::string strTopic = *iter;
         mosquitto_unsubscribe(this->m_ptrMosq, &this->m_mid, strTopic.c_str());
     }
 }

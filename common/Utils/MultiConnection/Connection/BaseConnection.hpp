@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <vector>
 
 using namespace std;
 
@@ -23,14 +24,17 @@ public:
 
 public:
     BaseConnection() {}
-    virtual ~BaseConnection() {};
+    virtual ~BaseConnection() {}
 
     virtual void Init() {}
     virtual void Run() {}
     virtual void Connect() {}
     virtual void DisConnect() {}
     virtual void MsgRecieve() {}
-    virtual void MsgSend(std::string &strMsg) {}
+    virtual void MsgSend(std::string strMsg) {}
+    virtual void MsgSend(std::string strTopic, std::string strMsg) {}
+
+    virtual void Subscribe(std::vector<std::string> &strTopicList) {}
 };
 
 #endif //!_BASE_CONNECTION_

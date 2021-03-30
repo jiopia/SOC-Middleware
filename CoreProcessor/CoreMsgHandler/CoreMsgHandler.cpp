@@ -13,7 +13,7 @@ CoreMsgHandler::~CoreMsgHandler()
 
 void CoreMsgHandler::Run()
 {
-    std::thread msgRecieveTh(std::bind(&MsgReciever, this));
+    std::thread msgRecieveTh(std::bind(&CoreMsgHandler::MsgReciever, this));
     msgRecieveTh.detach();
 
     std::string strMsgSend;
@@ -27,7 +27,7 @@ void CoreMsgHandler::Run()
 
         strMsgSend = asctime(t_tm);
         strMsgSend = strMsgSend.substr(0, strMsgSend.length() - 1);
-        m_mqttClient->MsgSend(MQTT_TOPIC_WARN_VIEW, strMsgSend);
+        m_mqttClient->MsgSend(std::string(MQTT_TOPIC_WARN_VIEW), strMsgSend);
     }
 }
 

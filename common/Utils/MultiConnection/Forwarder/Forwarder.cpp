@@ -23,7 +23,7 @@ std::string Forwarder::MsgPop()
     std::lock_guard<std::mutex> lockGuard(m_mtx);
     if (!m_msgQueue.empty())
     {
-        strMsg = this->m_msgQueue.top();
+        strMsg = this->m_msgQueue.front();
         this->m_msgQueue.pop();
     }
 

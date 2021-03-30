@@ -116,7 +116,7 @@ void MsgHandler::RemoveCurrentWarn()
 /** 
  * @brief   MsgHandler类的主要处理函数
  */
-void MsgHandler::run()
+void MsgHandler::Run()
 {
     SharedMemInit();
 

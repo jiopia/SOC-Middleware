@@ -28,6 +28,6 @@ private:
     void MsgProcessor(std::string strMsg);
 
     std::shared_ptr<BaseConnection> m_mqttClient = NULL;
-}
+};
 
 #endif //!_CORE_MSG_HANDLER_H_

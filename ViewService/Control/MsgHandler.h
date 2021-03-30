@@ -52,7 +52,7 @@ private:
     int AtLeastTimerDelete();
     void ResetAtLeastFlag();
 
-    void run();
+    void Run();
     void HandleWarnViews();
     void Notify(ViewNode &viewNode);
 

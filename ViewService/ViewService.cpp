@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	std::string fileName(argv[1]);
 	XmlManager::GetInstance()->XmlParse(fileName);
-	Actuator::GetInstance()->start();
+	Actuator::GetInstance()->Start();
 
 	while (1)
 	{
