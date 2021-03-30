@@ -83,12 +83,17 @@ LDFLAGS   =
   
 # The directories in which source files reside.  
 # If not specified, only the current directory will be serached.  
-SRCDIRS   = $(shell pwd)
+CURR_DIRS = $(shell pwd)
+
+SRCDIRS	:= $(CURR_DIRS) \
+	$(CURR_DIRS)/../common/third_party/TinyXML \
+	$(CURR_DIRS)/../common/third_party/Thread \
+	$(CURR_DIRS)/../common/third_party/cJSON
   
 # The executable file name.  
 # If not specified, current directory name or `a.out‘ will be used.  
 PROGRAM   = ViewService
-  
+
 ## Implicit Section: change the following only when necessary.  
 ##==========================================================================  
   
@@ -121,27 +126,10 @@ ETAGSFLAGS =
   
 CTAGS = ctags  
 CTAGSFLAGS =  
-  
-## Stable Section: usually no need to be changed. But you can add more.  
-##==========================================================================  
-SHELL   = /bin/bash
-EMPTY   =  
-SPACE   = $(EMPTY) $(EMPTY)  
-ifeq ($(PROGRAM),)  
-  CUR_PATH_NAMES = $(subst /,$(SPACE),$(subst $(SPACE),_,$(CURDIR)))  
-  PROGRAM = $(word $(words $(CUR_PATH_NAMES)),$(CUR_PATH_NAMES))  
-  ifeq ($(PROGRAM),)  
-    PROGRAM = a.out  
-  endif
-endif
-# ifeq ($(SRCDIRS),)  
-#   SRCDIRS = .
-# endif
 
 # Get .c, .cpp source files by searching from current directory.
 CUR_SRC_DIR	 = $(shell ls -AxR $(CURDIR)|grep ":"|tr -d ':')
 CUR_SRC 	:= $(foreach subdir,$(CUR_SRC_DIR),$(wildcard $(subdir)/*.c $(subdir)/*.cpp))
-#CUR_SRC 	:= $(shell find . -name "*.c" -o -name "*.cpp"|sed -e 's,./,,')
 CUR_C   	:= $(filter %.c, $(CUR_SRC))
 CUR_CPP 	:= $(filter %.cpp, $(CUR_SRC))
 
@@ -157,7 +145,7 @@ SRC_CXX = $(CUR_CPP)#$(filter-out %.c,$(SOURCES))
 OBJS    = $(strip $(CUR_CPP:.cpp=.o) $(CUR_C:.c=.o))#$(addsuffix .o, $(basename $(SOURCES)))  
 DEPS    = $(OBJS:.o=.d)
 
-## Define some useful variables.  
+## Define some useful variables.
 DEP_OPT = $(shell if `$(CC) --version | grep "GCC" >/dev/null`; then 			echo "-MM -MP"; else echo "-M"; fi )  
 DEPEND      = $(CC)  $(DEP_OPT) $(MY_CFLAGS) $(CFLAGS) $(CPPFLAGS)  
 DEPEND.d    = $(subst -g ,,$(DEPEND))  
@@ -255,13 +243,6 @@ else                            # C++ program
 	@echo Type ./$@ to execute the program.  
 endif  
 
-# ifndef NODEP  
-# ifneq ($(DEPS),all)
-# # sinclude 与 -include 作用一样，当找不到你所包含的文件时，不停止执行，忽略该错误
-# 	sinclude $(DEPS)  
-# endif  
-# endif  
-  
 clean:  
 	$(RM) $(OBJS) $(PROGRAM) $(PROGRAM).exe  
   

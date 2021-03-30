@@ -1,81 +1,50 @@
 #include "CoreMsgHandler.hpp"
+#include "Forwarder.hpp"
 
 CoreMsgHandler::CoreMsgHandler()
 {
-    CoreMqttInit();
+    m_mqttClient = std::make_shared<MqttConnection>(MQTT_HOST, MQTT_PORT, BDSTAR_MOSQUITTP);
+    m_mqttClient->Run();
 }
 
 CoreMsgHandler::~CoreMsgHandler()
 {
 }
 
-void CoreMsgHandler::CoreMqttInit(const std::string &host, const int port)
+void CoreMsgHandler::Run()
 {
-    _host = host;
-    _port = port;
+    std::thread msgRecieveTh(std::bind(&MsgReciever, this));
+    msgRecieveTh.detach();
 
-    // init subscribe struct
-    _mosq = mosquitto_new(nullptr, true, nullptr);
-    if (mosquitto_connect(_mosq, _host.c_str(), _port, _keep_alive) != MOSQ_ERR_SUCCESS)
-    {
-        std::cerr << "connect error!!" << std::endl;
-        _connected = false;
-        exit(-1);
-    }
-    else
-    {
-        _connected = true;
-    }
-    std::cout << "subscribe init finished" << std::endl;
-
-    // init recive callback
-    mosquitto_lib_init();
-
-    auto register_callback = [=] {
-        mosquitto_subscribe_callback(
-            &CoreMsgHandler::CoreMsgHandlerMqttCallBack, NULL,
-            "MessageHandler/#", 0,
-            _host.c_str(), _port,
-            NULL, 60, true,
-            NULL, NULL,
-            NULL, NULL);
-        // this api can not return??
-    };
-    std::thread register_callback_thread(register_callback);
-    register_callback_thread.detach();
-    std::cout << "finished callback init" << std::endl;
-}
-
-int CoreMsgHandler::CoreMqttCallBack(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *msg)
-{
-    std::cout << "FROM topic: " << msg->topic << std::endl;
-    std::string strWarnMsg = (const char *)msg->payload;
-    std::cout << "GOT message:\n"
-              << strWarnMsg << std::endl;
-
-    std::lock_guard<std::mutex> lockGuard(m_mtxMsgListen);
-    if (!strWarnMsg.empty())
-    {
-        InfoPrint("Recieve Warning Message From MCU:[%s]\r\n", strWarnMsg.c_str());
-        std::string strViewName, strExtraInfo, strViewStatus;
-        JsonHandler::GetInstance()->WarnMsgParse(strWarnMsg, strViewName, strExtraInfo, strViewStatus);
-        if (!strViewName.empty() &&
-            !strExtraInfo.empty() &&
-            !strViewStatus.empty())
-        {
-           CoreMsgHandler::m_msgHandler->SetWarnView(strViewName.c_str(),
-                                            strExtraInfo.c_str(), strViewStatus.compare("ON") == 0 ? VIEW_ON : VIEW_OFF);
-        }
-    }
-
-    return 0;
-}
-
-void CoreMsgHandler::run()
-{
+    std::string strMsgSend;
     while (1)
     {
         InfoPrint("RUN......\n");
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+        time_t now_time = time(NULL);
+        tm *t_tm = localtime(&now_time);
+
+        strMsgSend = asctime(t_tm);
+        strMsgSend = strMsgSend.substr(0, strMsgSend.length() - 1);
+        m_mqttClient->MsgSend(MQTT_TOPIC_WARN_VIEW, strMsgSend);
     }
+}
+
+void CoreMsgHandler::MsgReciever()
+{
+    while (1)
+    {
+        std::string strMsg = Forwarder::GetInstance()->MsgPop();
+        if (!strMsg.empty())
+        {
+            MsgProcessor(strMsg);
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+}
+
+void CoreMsgHandler::MsgProcessor(std::string strMsg)
+{
+    InfoPrint("Message:[%s] Comming\r\n", strMsg.c_str());
 }

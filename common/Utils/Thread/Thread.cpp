@@ -14,9 +14,9 @@ Thread::Thread()
 
 Thread::~Thread()
 {
-	if (!this->isInterrupted())
+	if (!this->IsInterrupted())
 	{
-		this->interrupt();
+		this->Interrupt();
 	}
 
 	if (this->th.joinable())
@@ -25,32 +25,32 @@ Thread::~Thread()
 	}
 }
 
-void Thread::start()
+void Thread::Start()
 {
-	std::thread thr(std::bind(&Thread::run, this));
+	std::thread thr(std::bind(&Thread::Run, this));
 	this->th = std::move(thr);
 }
 
-std::thread::id Thread::getId()
+std::thread::id Thread::GetId()
 {
 	return this->th.get_id();
 }
 
-void Thread::interrupt()
+void Thread::Interrupt()
 {
 	this->isInterript = true;
 }
 
-bool Thread::isInterrupted()
+bool Thread::IsInterrupted()
 {
 	return this->isInterript;
 }
 
-void Thread::join()
+void Thread::Join()
 {
 	this->th.join();
 }
 
-void Thread::run()
+void Thread::Run()
 {
 }

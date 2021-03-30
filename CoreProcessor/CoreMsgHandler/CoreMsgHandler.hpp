@@ -7,6 +7,7 @@
 #include "Singleton.hpp"
 #include "PriorityQueue.hpp"
 #include "mosquitto.h"
+#include "MqttConnection.hpp"
 
 //bdsdk
 #include "savedData.h"
@@ -20,20 +21,13 @@ public:
     ~CoreMsgHandler();
 
 private:
-    void run();
+    void Run();
 
-    void CoreMqttInit(const std::string &host, const int port);
+    void MsgReciever();
 
-    static int CoreMqttCallBack(struct mosquitto *mosq, void *userdata, const struct mosquitto_message *msg);
+    void MsgProcessor(std::string strMsg);
 
-    struct mosquitto *_mosq = nullptr;
-    std::string _host;
-    int _port;
-    int _keep_alive = 60;
-    bool _connected = false;
-    std::string _mesg_pub_topic = "MessageHandler/publish";
-    std::string _mesg_cb_topic = "MessageHandler/call_back";
-
+    std::shared_ptr<BaseConnection> m_mqttClient = NULL;
 }
 
 #endif //!_CORE_MSG_HANDLER_H_

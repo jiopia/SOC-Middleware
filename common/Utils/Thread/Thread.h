@@ -19,12 +19,12 @@ public:
 	Thread();
 	virtual ~Thread();
 
-	void start();
-	std::thread::id getId();
-	void interrupt();
-	bool isInterrupted();
-	void join();
-	virtual void run();
+	void Start();
+	std::thread::id GetId();
+	void Interrupt();
+	bool IsInterrupted();
+	void Join();
+	virtual void Run();
 
 private:
 	std::atomic<bool> isInterript;

@@ -61,16 +61,15 @@ PROJECT_ROOT := $(patsubst %/, %, $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # The pre-processor and compiler options.  
 MY_CFLAGS =  \
 	-I$(PROJECT_ROOT)/../common/bdsdk/include  \
-	-I$(PROJECT_ROOT)/../common/TinyXML  \
-	-I$(PROJECT_ROOT)/Actuator \
-	-I$(PROJECT_ROOT)/Control  \
-	-I$(PROJECT_ROOT)/TinyXML  \
-	-I$(PROJECT_ROOT)/Utils  \
-	-I$(PROJECT_ROOT)/Utils/JsonHandler  \
-	-I$(PROJECT_ROOT)/Utils/Singleton  \
-	-I$(PROJECT_ROOT)/Utils/Thread  \
-	-I$(PROJECT_ROOT)/View  \
-	-I$(PROJECT_ROOT)/XmlParse
+	-I$(PROJECT_ROOT)/../common/Utils  \
+	-I$(PROJECT_ROOT)/../common/Utils/cJSON  \
+	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection  \
+	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection/Mqtt  \
+	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Forwarder  \
+	-I$(PROJECT_ROOT)/../common/Utils/Singleton  \
+	-I$(PROJECT_ROOT)/../common/Utils/Thread  \
+	-I$(PROJECT_ROOT)/../common/Utils/TinyXML  \
+	-I$(PROJECT_ROOT)/CoreMsgHandler
 
 # The linker options.  
 MY_LIBS   =  
@@ -134,16 +133,22 @@ ifeq ($(PROGRAM),)
     PROGRAM = a.out  
   endif
 endif
-# ifeq ($(SRCDIRS),)  
-#   SRCDIRS = .
-# endif
 
 # Get .c, .cpp source files by searching from current directory.
 CUR_SRC_DIR	 = $(shell ls -AxR $(CURDIR)|grep ":"|tr -d ':')
 CUR_SRC 	:= $(foreach subdir,$(CUR_SRC_DIR),$(wildcard $(subdir)/*.c $(subdir)/*.cpp))
-#CUR_SRC 	:= $(shell find . -name "*.c" -o -name "*.cpp"|sed -e 's,./,,')
 CUR_C   	:= $(filter %.c, $(CUR_SRC))
 CUR_CPP 	:= $(filter %.cpp, $(CUR_SRC))
+CUR_CPP 	:= $(CUR_CPP) \
+	$(PROJECT_ROOT)/../common/Utils  \
+	$(PROJECT_ROOT)/../common/Utils/cJSON/cJSON.cpp  \
+	$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection/Mqtt/MqttConnection.cpp  \
+	$(PROJECT_ROOT)/../common/Utils/MultiConnection/Forwarder/Forwarder.cpp  \
+	$(PROJECT_ROOT)/../common/Utils/Thread/Thread.cpp  \
+	$(PROJECT_ROOT)/../common/Utils/TinyXML/tinystr.cpp \
+	$(PROJECT_ROOT)/../common/Utils/TinyXML/tinyxml.cpp \
+	$(PROJECT_ROOT)/../common/Utils/TinyXML/tinyxmlerror.cpp \
+	$(PROJECT_ROOT)/../common/Utils/TinyXML/tinyxmlparser.cpp
 
 # Get the include files, object files, dependent files by searching from PRG_INC_DIR.
 CUR_INC_DIR = $(shell ls -AxR $(PRG_INC_DIR)|grep ":"|tr -d ':')
@@ -153,8 +158,8 @@ SRC_HPP   	:= $(filter %.hpp, $(CUR_INC))
 
 SOURCES = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(SRCEXTS))))  
 HEADERS = $(foreach d,$(SRCDIRS),$(wildcard $(addprefix $(d)/*,$(HDREXTS))))  
-SRC_CXX = $(CUR_CPP)#$(filter-out %.c,$(SOURCES))
-OBJS    = $(strip $(CUR_CPP:.cpp=.o) $(CUR_C:.c=.o))#$(addsuffix .o, $(basename $(SOURCES)))  
+SRC_CXX = $(CUR_CPP)
+OBJS    = $(strip $(CUR_CPP:.cpp=.o) $(CUR_C:.c=.o))
 DEPS    = $(OBJS:.o=.d)
 
 ## Define some useful variables.  
@@ -255,13 +260,6 @@ else                            # C++ program
 	@echo Type ./$@ to execute the program.  
 endif  
 
-# ifndef NODEP  
-# ifneq ($(DEPS),all)
-# # sinclude 与 -include 作用一样，当找不到你所包含的文件时，不停止执行，忽略该错误
-# 	sinclude $(DEPS)  
-# endif  
-# endif  
-  
 clean:  
 	$(RM) $(OBJS) $(PROGRAM) $(PROGRAM).exe  
   
