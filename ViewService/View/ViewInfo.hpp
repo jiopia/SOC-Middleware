@@ -20,8 +20,9 @@ enum VIEW_STATUS
 class ViewInfo
 {
 public:
-    ViewInfo() {}
-    ~ViewInfo() {}
+    ViewInfo();
+    ViewInfo(const ViewInfo &viewInfo);
+    ~ViewInfo();
 
     bool operator<(const ViewInfo &viewInfo)
     {
@@ -46,7 +47,7 @@ public:
     std::string GetMutexStatus();
     std::string GetAudioBindInfo();
     std::string GetPower();
-    
+
     bool HasAlreadyExecuted();
 
     void SetKey(const char *key);

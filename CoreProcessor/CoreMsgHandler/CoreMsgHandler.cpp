@@ -3,7 +3,7 @@
 
 CoreMsgHandler::CoreMsgHandler()
 {
-    m_mqttClient = std::make_shared<MqttConnection>(MQTT_HOST, MQTT_PORT, BDSTAR_MOSQUITTP);
+    m_mqttClient = std::make_shared<MqttConnection>(MQTT_HOST, MQTT_PORT, BDSTAR_SOCKET_MQTT);
     m_mqttClient->Run();
 }
 

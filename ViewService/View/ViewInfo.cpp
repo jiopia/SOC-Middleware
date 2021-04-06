@@ -1,5 +1,33 @@
 #include "ViewInfo.hpp"
 
+ViewInfo::ViewInfo()
+{
+}
+
+ViewInfo::ViewInfo(const ViewInfo &viewInfo)
+{
+    this->m_strKey = viewInfo.GetKey();
+    this->m_strShowview = viewInfo.GetShowView();
+    this->m_strName = viewInfo.GetName();
+    this->m_strPid = viewInfo.GetPid();
+    this->m_strExtraInfo = viewInfo.GetExtraInfo();
+    this->m_strRepeatStatus = viewInfo.GetRepeatStatus();
+    this->m_iLoop = viewInfo.GetLoop();
+    this->m_iPriority = viewInfo.GetPriority();
+    this->m_strType = viewInfo.GetType();
+    this->m_strNotifyType = viewInfo.GetNotifyType();
+    this->m_strMutexStatus = viewInfo.GetMutexStatus();
+    this->m_strPower = viewInfo.GetPower();
+    this->m_strAudioBindInfo = viewInfo.GetAudioBindInfo();
+    this->m_iLeast = viewInfo.GetLeast();
+
+    this->isAlreadyExecuted = viewInfo.HasAlreadyExecuted();
+}
+
+ViewInfo::~ViewInfo()
+{
+}
+
 std::string ViewInfo::GetName()
 {
     return this->m_strName;

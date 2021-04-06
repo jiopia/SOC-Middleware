@@ -58,9 +58,9 @@ void XmlManager::XmlParse(const std::string &filename)
                 XmlAttrParse(viewInfo, pChildAttr);
                 pChildAttr = pChildAttr->Next();
             }
-            if (!viewInfo->GetName().empty())
+            if (!viewInfo->GetName().empty() && !viewInfo->GetExtraInfo().empty())
             {
-                m_configInfoMap.insert(std::make_pair(viewInfo->GetName(), viewInfo));
+                m_configInfoMap.insert(std::make_pair((viewInfo->GetName() + viewInfo->GetExtraInfo()), viewInfo));
             }
         }
     }

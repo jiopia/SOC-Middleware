@@ -54,6 +54,13 @@ public:
         return this->strViewName.empty() && this->strExtraInfo.empty();
     }
 
+    void SetEmpty()
+    {
+        this->strViewName.clear();
+        this->strExtraInfo.clear();
+        this->viewStatus = VIEW_DEFAULT;
+    }
+
     std::string strViewName;
     std::string strExtraInfo;
     VIEW_STATUS viewStatus = VIEW_DEFAULT;

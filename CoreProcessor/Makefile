@@ -16,7 +16,6 @@ CUR_C_PATH  := $(filter %.c, $(CUR_SRC_LIST))
 CUR_CPP_PATH:= $(filter %.cpp, $(CUR_SRC_LIST))
 
 COMMON_SRC_PATH = \
-	$(CUR_CPP_PATH) \
 	$(PROJECT_ROOT)/../common/Utils/cJSON/cJSON.cpp  \
 	$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection/Mqtt/MqttConnection.cpp  \
 	$(PROJECT_ROOT)/../common/Utils/MultiConnection/Forwarder/Forwarder.cpp  \
@@ -26,7 +25,10 @@ COMMON_SRC_PATH = \
 	$(PROJECT_ROOT)/../common/Utils/TinyXML/tinyxmlerror.cpp \
 	$(PROJECT_ROOT)/../common/Utils/TinyXML/tinyxmlparser.cpp
 
-SRC_PATH = $(CUR_C_PATH) $(COMMON_SRC_PATH)
+SRC_PATH = \
+	$(CUR_C_PATH) \
+	$(CUR_CPP_PATH) \
+	$(COMMON_SRC_PATH)
 
 INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/../common/bdsdk/include \

@@ -23,60 +23,60 @@ enum ViewOperationAction
     VIEW_ACTION_IGNOFF
 };
 
-typedef struct
-{
-    char warnData[2048];
-    pthread_mutex_t mtxSharedMemViewData;
-} ViewSharedMem;
-
-typedef std::multimap<ViewNode, std::shared_ptr<ViewInfo>> WarnInfoMultiMap;
+typedef std::multimap<ViewNode, ViewInfo> WarnInfoMultiMap;
 
 class MsgHandler : public Singleton<MsgHandler>, public Thread
 {
-    friend class Singleton<MsgHandler>;
-
 public:
     MsgHandler();
     ~MsgHandler();
 
-    void SharedMemInit();
     void SetWarnView(std::string strViewName, std::string strExtraInfo, VIEW_STATUS viewStatus);
-    void TouchOptionFlag(ViewOperationAction flag);
     void RemoveCurrentWarn();
 
+private:
+    void Run();
+    void HandleWarnViews();
+    void HideAllWarn();
+    void Notify(ViewNode &viewNode);
+
+    /* 更新/插入 告警列表List */
+    void UpdateWarnViewNode(ViewNode &viewNode);
+    void UpdateSeriousWarnList(ViewNode &viewNode);
+    void UpdateFrashWarnList(ViewNode &viewNode);
+
+    /* 获取 告警列表List */
+    void GetSeriousWarnListNode(ViewNode &viewNode);
+    void GetFrashWarnListNode(ViewNode &viewNode);
+    void GetLoopWarnListNode(ViewNode &viewNode);
+
+    void GetNextWarnViewNode(ViewNode &viewNode);
+
+    /* 删除 告警列表List */
+    void EraseWarnViewNode(ViewNode viewNode);
+    void EraseSeriousWarnListNode(ViewNode viewNode);
+    void EraseFreshWarnListNode(ViewNode viewNode);
+    void EraseLoopWarnListNode(ViewNode viewNode);
+
+    /* 更新/插入 详细告警信息Map */
+    void UpdateWarnInfoMap(ViewNode &viewNode, ViewInfo viewInfo);
+    /* 获取 详细告警信息Map */
+    std::shared_ptr<ViewInfo> GetWarnInfoFromMap(ViewNode &viewNode);
+    /* 删除 详细告警信息Map */
+    void EraseWarnNodeFromInfoMap(ViewNode &viewNode);
+
+    int GetViewPriority(ViewNode &viewNode);
+    bool CheckNeedPushLoopAgain(ViewNode &viewNode, std::shared_ptr<ViewInfo> viewInfo);
+    bool IsSeriousWarn(ViewNode &viewNode);
+    bool IsCurrHmiStatusMatchedSuccess();
+
+    int AtLeastTimerInit();
     int AtLeastTimerStart();
     int AtLeastTimerStop();
-
-private:
-    int AtLeastTimerInit();
     int AtLeastTimerDelete();
     void ResetAtLeastFlag();
 
-    void Run();
-    void HandleWarnViews();
-    void Notify(ViewNode &viewNode);
-
-    void InsertWarnViewNode(ViewNode &viewNode);
-    void GetNextWarnViewNode(ViewNode &viewNode);
-    void DeleteWarnViewNode();
-
-    void HideAllWarn();
-
-    void InsertWarnInfoMap(ViewNode &viewNode, std::shared_ptr<ViewInfo> viewInfo);
-    std::shared_ptr<ViewInfo> GetWarnInfoFromMap(ViewNode &viewNode);
-    void DeleteWarnInfoInMap(ViewNode &viewNode);
-
-    bool IsWarnClosedSilently(ViewNode &viewNode);
-    bool CheckNeedPushLoopAgain(ViewNode &viewNode, std::shared_ptr<ViewInfo> viewInfo);
-
-    bool IsSeriousWarn(ViewNode &viewNode);
-
-    bool IsCurrHmiStatusMatchedSuccess();
-
     timer_t m_timerId;
-
-    int m_fdShareMemViewData;
-    ViewSharedMem *m_ptrShareMemViewData;
 
     AudioControl *m_audioControl;
     XmlManager *m_xmlManager;
@@ -84,20 +84,18 @@ private:
 
     HmiStatus m_curHmiStatus = HMI_STATUS_DEFAULT;
 
-    std::mutex m_mtxForAction;
-    ViewOperationAction m_viewOperationAct = VIEW_ACTION_DEFAULT;
+    std::mutex m_mtxCurrWarn;
+    ViewNode m_currViewNode; //当前正在显示的告警
 
-    std::mutex m_mtxServerCoId;
-    std::set<int> m_serverCoIdList;
-
-    ViewNode m_currViewNode;
-
-    PriorityQueue<ViewNode> m_freshViewQueue; //尚未显示过的报警列表(按照优先级排序，自带锁)
-
-    PriorityQueue<ViewNode> m_loopShowQueue; //轮询显示的队列(按照优先级排序，自带锁)
+    std::mutex m_mtxSerious;
+    std::vector<ViewNode> m_seriousViewList; //严重告警列表
+    std::mutex m_mtxFresh;
+    std::vector<ViewNode> m_freshViewList; //尚未显示过的非严重告警列表
+    std::mutex m_mtxLoop;
+    std::vector<ViewNode> m_loopViewList; //循环显示的非严重告警列表
 
     std::mutex m_mtxWarnMap;
-    WarnInfoMultiMap m_warnInfoMap; //当前所有的报警信息Map
+    WarnInfoMultiMap m_warnInfoMap; //当前所有列表中的告警信息Map
 };
 
 #endif // !_MSG_HANDLER_H_

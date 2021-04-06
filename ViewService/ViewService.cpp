@@ -70,7 +70,7 @@ int main(int argc, char *argv[])
 		return EXIT_FAILURE;
 	}
 	
-	// SignalInit();
+	SignalInit();
 	setvbuf(stdout, NULL, _IOLBF, 0);
 	std::string fileName(argv[1]);
 	XmlManager::GetInstance()->XmlParse(fileName);

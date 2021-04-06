@@ -11,7 +11,7 @@ typedef enum
 {
     BDSTAR_SOCKET_TCP,
     BDSTAR_SOCKET_UDP,
-    BDSTAR_MOSQUITTP,
+    BDSTAR_SOCKET_MQTT,
 } ConnectType;
 
 class BaseConnection
