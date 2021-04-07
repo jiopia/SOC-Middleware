@@ -22,15 +22,15 @@ public:
     /* For std::priority_queue<T, std::vector<T>, std::greater<T>> */
     bool operator>(const ViewNode &viewNode) const
     {
-        return (XmlManager::GetInstance()->GetViewInfo(this->strViewName)->GetPriority() >
-                XmlManager::GetInstance()->GetViewInfo(viewNode.strViewName)->GetPriority());
+        return (XmlManager::GetInstance()->GetViewInfo(this->strViewName + this->strExtraInfo)->GetPriority() >
+                XmlManager::GetInstance()->GetViewInfo(viewNode.strViewName + viewNode.strExtraInfo)->GetPriority());
     }
 
     /* For std::multimap<ViewNode, std::shared_ptr<ViewInfo>> */
     bool operator<(const ViewNode &viewNode) const
     {
-        return (XmlManager::GetInstance()->GetViewInfo(this->strViewName)->GetPriority() <
-                XmlManager::GetInstance()->GetViewInfo(viewNode.strViewName)->GetPriority());
+        return (XmlManager::GetInstance()->GetViewInfo(this->strViewName + this->strExtraInfo)->GetPriority() <
+                XmlManager::GetInstance()->GetViewInfo(viewNode.strViewName + viewNode.strExtraInfo)->GetPriority());
     }
 
     ViewNode(const ViewNode &viewNode)

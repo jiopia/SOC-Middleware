@@ -12,8 +12,9 @@
 #define PUB_QOS 1
 #define SUB_QOS 1
 
-#define MQTT_TOPIC_WARN_VIEW "BDSTAR/view"
-#define MQTT_TOPIC_WARN_AUDIO "BDSTAR/audio"
+#define MQTT_TOPIC_WARN_VIEW "BDSTAR/VIEW"
+#define MQTT_TOPIC_WARN_AUDIO "BDSTAR/AUDIO"
+#define MQTT_TOPIC_WARN_AUDIO "BDSTAR/HMI"
 
 class MqttConnection : public BaseConnection
 {

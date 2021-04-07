@@ -28,29 +28,29 @@ ViewInfo::~ViewInfo()
 {
 }
 
-std::string ViewInfo::GetName()
+std::string ViewInfo::GetName() const
 {
     return this->m_strName;
 }
-std::string ViewInfo::GetPid()
+std::string ViewInfo::GetPid() const
 {
     return this->m_strPid;
 }
 
-std::string ViewInfo::GetExtraInfo()
+std::string ViewInfo::GetExtraInfo() const
 {
     return this->m_strExtraInfo;
 }
 
-int ViewInfo::GetLoop()
+int ViewInfo::GetLoop() const
 {
     return this->m_iLoop;
 }
-int ViewInfo::GetLeast()
+int ViewInfo::GetLeast() const
 {
     return this->m_iLeast;
 }
-std::string ViewInfo::GetType()
+std::string ViewInfo::GetType() const
 {
     return this->m_strType;
 }
@@ -58,36 +58,36 @@ int ViewInfo::GetPriority() const
 {
     return this->m_iPriority;
 }
-std::string ViewInfo::GetShowView()
+std::string ViewInfo::GetShowView() const
 {
     return this->m_strShowview;
 }
-std::string ViewInfo::GetKey()
+std::string ViewInfo::GetKey() const
 {
     return this->m_strKey;
 }
-std::string ViewInfo::GetNotifyType()
+std::string ViewInfo::GetNotifyType() const
 {
     return this->m_strNotifyType;
 }
-std::string ViewInfo::GetMutexStatus()
+std::string ViewInfo::GetMutexStatus() const
 {
     return this->m_strMutexStatus;
 }
-std::string ViewInfo::GetRepeatStatus()
+std::string ViewInfo::GetRepeatStatus() const
 {
     return this->m_strRepeatStatus;
 }
-std::string ViewInfo::GetAudioBindInfo()
+std::string ViewInfo::GetAudioBindInfo() const
 {
     return this->m_strAudioBindInfo;
 }
-std::string ViewInfo::GetPower()
+std::string ViewInfo::GetPower() const
 {
     return this->m_strPower;
 }
 
-bool ViewInfo::HasAlreadyExecuted()
+bool ViewInfo::HasAlreadyExecuted() const
 {
     return this->isAlreadyExecuted;
 }

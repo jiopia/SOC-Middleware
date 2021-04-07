@@ -11,13 +11,11 @@ typedef std::unordered_map<std::string, ViewInfoPtr> ConfigInfoMap;
 
 class XmlManager : public Singleton<XmlManager>
 {
-    friend class Singleton<XmlManager>;
-
 public:
     XmlManager();
     ~XmlManager();
 
-    ViewInfoPtr GetViewInfo(const std::string &viewName);
+    ViewInfoPtr GetViewInfo(const std::string keyName);
     void XmlParse(const std::string &filename);
 
 private:

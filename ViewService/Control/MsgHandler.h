@@ -54,9 +54,9 @@ private:
 
     /* 删除 告警列表List */
     void EraseWarnViewNode(ViewNode viewNode);
-    void EraseSeriousWarnListNode(ViewNode viewNode);
-    void EraseFreshWarnListNode(ViewNode viewNode);
-    void EraseLoopWarnListNode(ViewNode viewNode);
+    bool EraseSeriousWarnListNode(ViewNode viewNode);
+    bool EraseFreshWarnListNode(ViewNode viewNode);
+    bool EraseLoopWarnListNode(ViewNode viewNode);
 
     /* 更新/插入 详细告警信息Map */
     void UpdateWarnInfoMap(ViewNode &viewNode, ViewInfo viewInfo);

@@ -1,6 +1,6 @@
 TARGET = ViewService
 
-CROSS_CHAIN = aarch64-linux-gnu-
+CROSS_CHAIN = #aarch64-linux-gnu-
 
 CC = $(CROSS_CHAIN)gcc
 CXX = $(CROSS_CHAIN)g++
@@ -48,7 +48,7 @@ INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/XmlParse
 
 LIB_FLAG = \
-	-L$(PROJECT_ROOT)/../third_party/lib/aarch64
+	-L$(PROJECT_ROOT)/../third_party/lib/x86_64
 	#-L$(PROJECT_ROOT)/../third_party/lib/aarch64/x86_64
 
 LIB_FLAGS =

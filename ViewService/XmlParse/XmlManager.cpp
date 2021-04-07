@@ -8,15 +8,15 @@ XmlManager::~XmlManager()
 {
 }
 
-ViewInfoPtr XmlManager::GetViewInfo(const std::string &viewName)
+ViewInfoPtr XmlManager::GetViewInfo(const std::string keyName)
 {
-    ViewInfoPtr viewInfo = std::make_shared<ViewInfo>();
-    viewInfo = NULL;
+    ViewInfoPtr viewInfo = NULL;
     for (auto iter = m_configInfoMap.begin(); iter != m_configInfoMap.end(); iter++)
     {
-        if (iter->first == viewName)
+        if (iter->first == keyName)
         {
             viewInfo = iter->second;
+            break;
         }
     }
 

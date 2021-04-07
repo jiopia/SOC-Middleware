@@ -16,7 +16,7 @@
 		<view name="doorwarn" pid="HOOD" freq="1HZ" repeat="ON" loop="0s" prority="2" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s"/>
 		<!-- 门开报警(VehicleSpeed>=3km/h) 后备箱 -->
 		<view name="doorwarn" pid="BACK_DOOR" freq="1HZ" repeat="ON" loop="0s" prority="2" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s"/>
-		<!-- close all-->
+		<!-- 门开报警(VehicleSpeed>=3km/h) 解除所有报警 -->
 		<view name="doorwarn" pid="nowarning" freq="1HZ" repeat="ON" loop="0s" prority="2" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s"/>
 		<!-- 整车系统故障 -->
 		<view name="sys_fault" pid="sys_fault" freq="1HZ" repeat="ON" loop="0s" prority="3" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="sys_fault" least="1S" first="5s"/>
@@ -69,18 +69,22 @@
 		<view name="esp_cdp" pid="esp_cdp" freq="1HZ" repeat="ON" loop="5s" prority="25" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
 		<!-- 手机遗忘 -->
 		<view name="phone" pid="phone" freq="1HZ" repeat="ON" loop="5s" prority="26" type="notice" notifyType="notifyOne" mutex="OFF" power="wm2" audiobind="phone" least="1S" first="5s"/>
-		<!-- 门开提示 -->
-		<view name="doorinfo" pid="doorinfo" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s">
-			<view name="ALL" pid="ALL"/>
-			<view name="DRIVER_DOOR" pid="DRIVER_DOOR"/>
-			<view name="PASSENGER_DOOR" pid="PASSENGER_DOOR"/>
-			<view name="REAR_RIGHT_DOOR" pid="REAR_RIGHT_DOOR"/>
-			<view name="REAR_LEFT_DOOR" pid="REAR_LEFT_DOOR"/>
-			<view name="HOOD" pid="HOOD"/>
-			<view name="BACK_DOOR" pid="BACK_DOOR"/>
-			<view name="nowarning" pid="nowarning"/>
-			<!-- close all-->
-		</view>
+		<!-- 门开提示 所有门-->
+		<view name="doorinfo" pid="ALL" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
+		<!-- 门开提示 前左门 -->
+		<view name="doorinfo" pid="DRIVER_DOOR" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
+		<!-- 门开提示 前右门 -->
+		<view name="doorinfo" pid="PASSENGER_DOOR" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
+		<!-- 门开提示 后右门 -->
+		<view name="doorinfo" pid="REAR_RIGHT_DOOR" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
+		<!-- 门开提示 后左门 -->
+		<view name="doorinfo" pid="REAR_LEFT_DOOR" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
+		<!-- 门开提示 引擎盖 -->
+		<view name="doorinfo" pid="HOOD" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
+		<!-- 门开提示 后备箱 -->
+		<view name="doorinfo" pid="BACK_DOOR" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
+		<!-- 门开提示 解除所有提示-->
+		<view name="doorinfo" pid="nowarning" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
 		<!-- 主驾驶安全带报警 -->
 		<view name="mainbelt" pid="mainbelt" freq="1HZ" repeat="OFF" loop="5s" prority="28" type="notice" notifyType="notifyOne" mutex="OFF" audiobind="drive_belt" power="wm1" least="1S" first="5s"/>
 		<!-- 副驾驶安全带报警 -->
@@ -99,15 +103,16 @@
 		<view name="eps_check" pid="eps_check" freq="1HZ" repeat="ON" loop="5s" prority="35" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
 		<!-- 全景系统故障报警 -->
 		<view name="avm_check" pid="avm_check" freq="1HZ" repeat="ON" loop="5s" prority="36" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 全景探头故障报警 -->
-		<view name="avm_fault" pid="avm_fault" freq="1HZ" repeat="ON" loop="5s" prority="37" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s">
-			<view name="rear" pid="rear"/>
-			<view name="front" pid="front"/>
-			<view name="right" pid="right"/>
-			<view name="left" pid="left"/>
-			<view name="nowarning" pid="nowarning"/>
-			<!-- close all-->
-		</view>
+		<!-- 全景探头故障报警 后探头报警 -->
+		<view name="avm_fault" pid="rear" freq="1HZ" repeat="ON" loop="5s" prority="37" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
+		<!-- 全景探头故障报警 前探头报警 -->
+		<view name="avm_fault" pid="front" freq="1HZ" repeat="ON" loop="5s" prority="37" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
+		<!-- 全景探头故障报警 右探头报警 -->
+		<view name="avm_fault" pid="right" freq="1HZ" repeat="ON" loop="5s" prority="37" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
+		<!-- 全景探头故障报警 左探头报警 -->
+		<view name="avm_fault" pid="left" freq="1HZ" repeat="ON" loop="5s" prority="37" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
+		<!-- 全景探头故障报警 解除所有报警 -->
+		<view name="avm_fault" pid="nowarning" freq="1HZ" repeat="ON" loop="5s" prority="37" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
 		<!-- LDW报警 车道偏离(左) -->
 		<view name="ldw_L" pid="ldw_L" freq="1HZ" repeat="ON" loop="5s" prority="38" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" audiobind="ldwsound" least="1S" first="5s"/>
 		<!-- LDW报警 车道偏离(右) -->

@@ -33,22 +33,22 @@ public:
         return false;
     }
 
-    std::string GetName();
-    std::string GetPid();
-    std::string GetExtraInfo();
-    std::string GetRepeatStatus();
-    int GetLoop();
-    int GetLeast();
-    std::string GetType();
+    std::string GetName() const;
+    std::string GetPid() const;
+    std::string GetExtraInfo() const;
+    std::string GetRepeatStatus() const;
+    int GetLoop() const;
+    int GetLeast() const;
+    std::string GetType() const;
     int GetPriority() const;
-    std::string GetShowView();
-    std::string GetKey();
-    std::string GetNotifyType();
-    std::string GetMutexStatus();
-    std::string GetAudioBindInfo();
-    std::string GetPower();
+    std::string GetShowView() const;
+    std::string GetKey() const;
+    std::string GetNotifyType() const;
+    std::string GetMutexStatus() const;
+    std::string GetAudioBindInfo() const;
+    std::string GetPower() const;
 
-    bool HasAlreadyExecuted();
+    bool HasAlreadyExecuted() const;
 
     void SetKey(const char *key);
     void SetShowView(const char *showview);
