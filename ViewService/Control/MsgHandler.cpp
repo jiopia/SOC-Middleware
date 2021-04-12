@@ -49,7 +49,6 @@ void MsgHandler::SetWarnView(std::string strViewName, std::string strExtraInfo, 
         ErrPrint("Can NOT find ViewInfo which viewname is [%s]!\n", strViewName.c_str());
         return;
     }
-    viewInfo->SetExtraInfo(strExtraInfo.c_str());
 
     InfoPrint("DEBUG -- View[%s], Extra[%s], Status[%s].\n",
               strViewName.c_str(), strExtraInfo.c_str(), viewStatus == VIEW_ON ? "ON" : "OFF");
@@ -64,11 +63,26 @@ void MsgHandler::SetWarnView(std::string strViewName, std::string strExtraInfo, 
 void MsgHandler::RemoveCurrentWarn()
 {
     WarnPrint("Remove Current Warning View Info.\n");
-    std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
-    if (!IsSeriousWarn(m_currViewNode) || m_currViewNode.viewStatus == VIEW_OFF)
+    ViewNode tempViewNode;
     {
-        m_currViewNode.SetEmpty();
+        std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
+        ViewNode tempViewNode = m_currViewNode;
     }
+
+    EraseWarnViewNode(tempViewNode);
+
+    /* 对于上次显示的告警信息，如果需要轮询且未被执行过，则更新至轮训告警列表 */
+    if (CheckNeedPushLoopAgain(tempViewNode))
+    {
+        std::lock_guard<std::mutex> lockGuard(m_mtxLoop);
+        if (find(m_loopViewList.begin(), m_loopViewList.end(), tempViewNode) == m_loopViewList.end())
+        {
+            WarnPrint("WarnView:[%s] Need Push Loop List.\n", tempViewNode.strViewName.c_str());
+            m_loopViewList.emplace_back(tempViewNode);
+        }
+    }
+
+    // tempViewNode.SetEmpty();
 }
 
 /** 
@@ -78,7 +92,11 @@ void MsgHandler::Run()
 {
     while (1)
     {
-        // HandleWarnViews();
+        if (IsAtLeastTimeDone())
+        {
+            HandleWarnViews();
+        }
+
         std::this_thread::sleep_for(std::chrono::milliseconds(10)); //防止CPU过载
     }
 }
@@ -96,25 +114,19 @@ void MsgHandler::HandleWarnViews()
 
     ViewNode nextWarnViewNode;
     GetNextWarnViewNode(nextWarnViewNode);
-
-    std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
-    std::shared_ptr<ViewInfo> pNextViewInfo = GetWarnInfoFromMap(nextWarnViewNode);
-    if (nextWarnViewNode.Empty() ||
-        pNextViewInfo == NULL ||
-        m_currViewNode == nextWarnViewNode)
+    if (nextWarnViewNode.Empty())
     {
-        if (!nextWarnViewNode.Empty() && pNextViewInfo == NULL)
-        {
-            EraseWarnViewNode(nextWarnViewNode);
-        }
         return;
     }
 
-    std::shared_ptr<ViewInfo> pCurrViewInfo = GetWarnInfoFromMap(m_currViewNode);
-    if (pCurrViewInfo != NULL && //当前存在报警信息
-        !g_isAtLeastTimeDone)    //最小计时还没有结束
+    std::shared_ptr<ViewInfo> pNextViewInfo = m_xmlManager->GetViewInfo(nextWarnViewNode.GetKeyName());
+    if (pNextViewInfo == NULL ||
+        m_currViewNode == nextWarnViewNode)
     {
-        DebugPrint("At Least the Time Required to Display is NOT Over.\n");
+        if (pNextViewInfo == NULL)
+        {
+            EraseWarnViewNode(nextWarnViewNode);
+        }
         return;
     }
 
@@ -124,44 +136,58 @@ void MsgHandler::HandleWarnViews()
     case VIEW_OFF:
     {
         /* code */
-        Actuator::GetInstance()->WarnShowTimerStop();
-        EraseWarnViewNode(nextWarnViewNode);
-        EraseWarnNodeFromInfoMap(nextWarnViewNode);
-
-        viewNeedExected = nextWarnViewNode;
+        if (nextWarnViewNode.strViewName == m_currViewNode.strViewName &&
+            nextWarnViewNode.strExtraInfo == m_currViewNode.strExtraInfo)
+        {
+            EraseWarnViewNode(nextWarnViewNode);
+            viewNeedExected = nextWarnViewNode;
+            Actuator::GetInstance()->WarnShowTimerStop();
+        }
     }
     break;
     case VIEW_ON:
     case VIEW_FLICKER:
     {
+        std::shared_ptr<ViewInfo> pCurrViewInfo = m_xmlManager->GetViewInfo(m_currViewNode.GetKeyName());
         /* 下一个告警是：优先级更高的报警信息 */
         if (pCurrViewInfo != NULL &&
             pNextViewInfo->GetPriority() < pCurrViewInfo->GetPriority())
         {
-            /* 对于上次显示的告警信息，如果需要轮询且未被执行过，则更新至轮训告警列表 */
-            if (CheckNeedPushLoopAgain(m_currViewNode, pCurrViewInfo) &&
-                !pCurrViewInfo->HasAlreadyExecuted())
-            {
-                pCurrViewInfo->SetAlreadyExecutedFlag();
-                UpdateWarnInfoMap(m_currViewNode, *(pCurrViewInfo));
-
-                std::lock_guard<std::mutex> lockGuard(m_mtxLoop);
-                m_loopViewList.emplace_back(m_currViewNode);
-            }
-
-            AtLeastTimerStart(); //1.5秒最短显示计时开始
             Actuator::GetInstance()->WarnShowTimerStop();
-            Actuator::GetInstance()->WarnShowTimerStart(pNextViewInfo->GetLoop());
-
-            viewNeedExected = nextWarnViewNode;
+            InfoPrint("Warn View Replace duw to High Priority.\n");
         }
+
+        AtLeastTimerStart(); //1.5秒最短显示计时开始
+        Actuator::GetInstance()->WarnShowTimerStart(pNextViewInfo->GetLoop());
+        viewNeedExected = nextWarnViewNode;
+
+        /*
+        报警逻辑：
+            1、严重报警：seriousList列表内，优先执行；
+            2、新报警：freshList列表内，次优先执行；
+            3、轮询报警：loopList列表内，新报警列表内执行过的报警，在经过判断，符合轮询报警的要求之后，转入loopList列表内；
+            [A, loop(0), repeat(ON),  pri(1) ]          A, 严重报警, 优先级1
+            [B, loop(5), repeat(OFF), pri(30)]          B, 首轮报警，优先级30
+            [C, loop(5), repeat(ON),  pri(20)]          C, 轮询报警，优先级20
+            [D, loop(5), repeat(ON),  pri(19)]          D, 轮询报警，优先级19
+
+            情景：
+                A   -> seriousList.emplace_back(A)
+                    -> Handle[ (1)curr:Empty, next:A;  ]
+
+        慎重考虑一下几种情况：
+            1、进入轮询之后（每个报警3s的轮询时间），有新的报警来临时，保持最短显示时间（1.5s），然后显示新的报警；
+            2、
+        */
     }
     break;
     default:
         break;
     }
 
+    std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
     m_currViewNode = nextWarnViewNode;
+
     Notify(viewNeedExected);
 }
 
@@ -172,8 +198,11 @@ void MsgHandler::HandleWarnViews()
 void MsgHandler::HideAllWarn()
 {
     WarnPrint("Hide All Warning View Info.\n");
-    std::lock_guard<std::mutex> lockGuard(g_mtxHideAll);
-    g_isAllWarnHidden = true;
+    if (IsAtLeastTimeDone())
+    {
+        std::lock_guard<std::mutex> lockGuard(g_mtxHideAll);
+        g_isAllWarnHidden = true;
+    }
 }
 
 /** 
@@ -216,16 +245,13 @@ void MsgHandler::Notify(ViewNode &viewNode)
  */
 void MsgHandler::UpdateWarnViewNode(ViewNode &viewNode)
 {
-    std::string strKeyName = viewNode.strViewName + viewNode.strExtraInfo;
-    std::shared_ptr<ViewInfo> pViewInfo = m_xmlManager->GetViewInfo(strKeyName);
+    std::shared_ptr<ViewInfo> pViewInfo = m_xmlManager->GetViewInfo(viewNode.GetKeyName());
     if (pViewInfo == NULL)
     {
         WarnPrint("ViewName:[%s], ExtraName:[%s] is NOT supported now......\n",
                   viewNode.strViewName.c_str(), viewNode.strExtraInfo.c_str());
         return;
     }
-
-    UpdateWarnInfoMap(viewNode, *(pViewInfo));
 
     if (g_isAllWarnHidden &&
         viewNode.viewStatus == VIEW_ON)
@@ -244,17 +270,8 @@ void MsgHandler::UpdateWarnViewNode(ViewNode &viewNode)
         UpdateFrashWarnList(viewNode);
     }
 
-#if 1
+#if 1 /* -- Debug test -- */
     {
-        InfoPrint("m_warnInfoMap Size:[%d]\r\n", (int)m_warnInfoMap.size());
-        for (auto iter : m_warnInfoMap)
-        {
-            ViewNode warnNode = iter.first;
-            InfoPrint("WarnInfoMap -- ViewName:[%s], ExtraInfo:[%s]\r\n",
-                      warnNode.strViewName.c_str(),
-                      warnNode.strExtraInfo.c_str());
-        }
-
         InfoPrint("m_seriousViewList Size:[%d]\r\n", (int)m_seriousViewList.size());
         for (auto iter : m_seriousViewList)
         {
@@ -291,26 +308,31 @@ void MsgHandler::UpdateWarnViewNode(ViewNode &viewNode)
 void MsgHandler::UpdateSeriousWarnList(ViewNode &viewNode)
 {
     bool isAlreadyExist = false;
-    std::lock_guard<std::mutex> lockGuard(m_mtxSerious);
-    for (auto iter = m_seriousViewList.begin(); iter != m_seriousViewList.end(); iter++)
     {
-        ViewNode *tempNode = &(*iter);
-        if (tempNode->strViewName == viewNode.strViewName &&
-            tempNode->strExtraInfo == viewNode.strExtraInfo)
+        std::lock_guard<std::mutex> lockGuard(m_mtxSerious);
+        for (auto iter = m_seriousViewList.begin(); iter != m_seriousViewList.end(); iter++)
         {
-            tempNode->viewStatus = viewNode.viewStatus;
-            isAlreadyExist = true;
+            ViewNode *tempNode = &(*iter);
+            if (tempNode->strViewName == viewNode.strViewName &&
+                tempNode->strExtraInfo == viewNode.strExtraInfo)
+            {
+                tempNode->viewStatus = viewNode.viewStatus;
+                isAlreadyExist = true;
+            }
+        }
+
+        if (!isAlreadyExist)
+        {
+            m_seriousViewList.emplace_back(viewNode);
+            std::sort(m_seriousViewList.begin(), m_seriousViewList.end(), ViewListSortFunction);
         }
     }
 
-    if (!isAlreadyExist)
     {
-        m_seriousViewList.emplace_back(viewNode);
-        std::sort(m_seriousViewList.begin(), m_seriousViewList.end(), ViewListSortFunction);
+        /* 在处理非轮询类告警时，将轮询列表排序，为了保证之后再次处理轮询列表时是按照优先级处理的 */
+        std::lock_guard<std::mutex> lockGuard(m_mtxLoop);
+        std::sort(m_loopViewList.begin(), m_loopViewList.end(), ViewListSortFunction);
     }
-
-    /* 在处理非轮询类告警时，将轮询列表排序，为了保证之后再次处理轮询列表时是按照优先级处理的 */
-    std::sort(m_loopViewList.begin(), m_loopViewList.end(), ViewListSortFunction);
 }
 
 /** 
@@ -319,25 +341,30 @@ void MsgHandler::UpdateSeriousWarnList(ViewNode &viewNode)
 void MsgHandler::UpdateFrashWarnList(ViewNode &viewNode)
 {
     bool isAlreadyExist = false;
-    std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
-    for (auto iter = m_freshViewList.begin(); iter != m_freshViewList.end(); iter++)
     {
-        ViewNode *tempNode = &(*iter);
-        if (tempNode->strViewName == viewNode.strViewName &&
-            tempNode->strExtraInfo == viewNode.strExtraInfo)
+        std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
+        for (auto iter = m_freshViewList.begin(); iter != m_freshViewList.end(); iter++)
         {
-            tempNode->viewStatus = viewNode.viewStatus;
-            isAlreadyExist = true;
+            ViewNode *tempNode = &(*iter);
+            if (tempNode->strViewName == viewNode.strViewName &&
+                tempNode->strExtraInfo == viewNode.strExtraInfo)
+            {
+                tempNode->viewStatus = viewNode.viewStatus;
+                isAlreadyExist = true;
+            }
+        }
+
+        if (!isAlreadyExist)
+        {
+            m_freshViewList.emplace_back(viewNode);
         }
     }
 
-    if (!isAlreadyExist)
     {
-        m_freshViewList.emplace_back(viewNode);
+        /* 在处理非轮询类告警时，将轮询列表排序，为了保证之后再次处理轮询列表时是按照优先级处理的 */
+        std::lock_guard<std::mutex> lockGuard(m_mtxLoop);
+        std::sort(m_loopViewList.begin(), m_loopViewList.end(), ViewListSortFunction);
     }
-
-    /* 在处理非轮询类告警时，将轮询列表排序，为了保证之后再次处理轮询列表时是按照优先级处理的 */
-    std::sort(m_loopViewList.begin(), m_loopViewList.end(), ViewListSortFunction);
 }
 
 /** 
@@ -385,20 +412,18 @@ void MsgHandler::GetNextWarnViewNode(ViewNode &viewNode)
 
     if (m_freshViewList.empty() && m_loopViewList.empty())
     {
-        std::lock_guard<std::mutex> lockGuard(m_mtxWarnMap);
-        m_warnInfoMap.clear(); //为了确保同步
         return;
     }
 
     if (!m_freshViewList.empty())
     {
         GetFrashWarnListNode(viewNode);
-        EraseFreshWarnListNode(viewNode);
+        // EraseFreshWarnListNode(viewNode);
     }
     else if (!m_loopViewList.empty())
     {
         GetLoopWarnListNode(viewNode);
-        EraseFreshWarnListNode(viewNode);
+        // EraseFreshWarnListNode(viewNode);
     }
 }
 
@@ -410,8 +435,6 @@ void MsgHandler::EraseWarnViewNode(ViewNode viewNode)
     {
         EraseLoopWarnListNode(viewNode);
     }
-
-    EraseWarnNodeFromInfoMap(viewNode);
 }
 
 bool MsgHandler::EraseSeriousWarnListNode(ViewNode viewNode)
@@ -472,72 +495,6 @@ bool MsgHandler::EraseLoopWarnListNode(ViewNode viewNode)
 }
 
 /** 
- * @brief   从 m_mtxWarnMap 中获取指定Node的ViewInfo信息
- * 
- * @param   viewNode    告警信息的一些重要信息类对象的引用
- * 
- * @return  获取的ViewInfo信息
- *          NULL    没有对应的信息
- *          非NULL  获取到的ViewInfo信息
- */
-std::shared_ptr<ViewInfo> MsgHandler::GetWarnInfoFromMap(ViewNode &viewNode)
-{
-    std::lock_guard<std::mutex> lockGuard(m_mtxWarnMap);
-    std::shared_ptr<ViewInfo> pViewInfo = NULL;
-    for (auto iter : m_warnInfoMap)
-    {
-        if (iter.first == viewNode)
-        {
-            ViewInfo tmpViewInfo = iter.second;
-            pViewInfo = std::make_shared<ViewInfo>(tmpViewInfo);
-            break;
-        }
-    }
-
-    return pViewInfo;
-}
-
-/** 
- * @brief   更新/插入 m_mtxWarnMap 中指定的Node信息
- * 
- * @param   viewNode    告警信息的一些重要信息类对象的引用
- */
-void MsgHandler::UpdateWarnInfoMap(ViewNode &viewNode, ViewInfo viewInfo)
-{
-    std::lock_guard<std::mutex> lockGuard(m_mtxWarnMap);
-    for (auto iter = m_warnInfoMap.begin(); iter != m_warnInfoMap.end(); iter++)
-    {
-        ViewNode warnNode = iter->first;
-        if (warnNode.strViewName == viewNode.strViewName &&
-            warnNode.strExtraInfo == viewNode.strExtraInfo)
-        {
-            m_warnInfoMap.erase(iter);
-            break;
-        }
-    }
-
-    m_warnInfoMap.insert(std::make_pair(viewNode, viewInfo));
-}
-
-/** 
- * @brief   删除 m_mtxWarnMap 中指定的Node信息
- * 
- * @param   viewNode    告警信息的一些重要信息类对象的引用
- */
-void MsgHandler::EraseWarnNodeFromInfoMap(ViewNode &viewNode)
-{
-    std::lock_guard<std::mutex> lockGuard(m_mtxWarnMap);
-    for (auto iter = this->m_warnInfoMap.begin(); iter != this->m_warnInfoMap.end(); iter++)
-    {
-        if (iter->first == viewNode)
-        {
-            m_warnInfoMap.erase(iter);
-            return;
-        }
-    }
-}
-
-/** 
  * @brief   获取告警的优先级
  * 
  * @param   viewNode    告警类对象的引用
@@ -545,8 +502,7 @@ void MsgHandler::EraseWarnNodeFromInfoMap(ViewNode &viewNode)
 int MsgHandler::GetViewPriority(ViewNode &viewNode)
 {
     int priority = -1;
-    std::string strKeyName = viewNode.strViewName + viewNode.strExtraInfo;
-    std::shared_ptr<ViewInfo> pViewInfo = m_xmlManager->GetViewInfo(strKeyName);
+    std::shared_ptr<ViewInfo> pViewInfo = m_xmlManager->GetViewInfo(viewNode.GetKeyName());
     if (pViewInfo != NULL)
     {
         priority = pViewInfo->GetPriority();
@@ -565,10 +521,12 @@ int MsgHandler::GetViewPriority(ViewNode &viewNode)
  *          true    需要(为轮询类的VIEW_ON类告警)
  *          false   不需要
  */
-bool MsgHandler::CheckNeedPushLoopAgain(ViewNode &viewNode, std::shared_ptr<ViewInfo> viewInfo)
+bool MsgHandler::CheckNeedPushLoopAgain(ViewNode &viewNode)
 {
-    if (viewNode.viewStatus == VIEW_ON &&
-        viewInfo->GetRepeatStatus().compare("ON") == 0 &&
+    std::shared_ptr<ViewInfo> pViewInfo = m_xmlManager->GetViewInfo(viewNode.GetKeyName());
+    if (pViewInfo != NULL &&
+        viewNode.viewStatus == VIEW_ON &&
+        pViewInfo->GetRepeatStatus().compare("ON") == 0 &&
         IsSeriousWarn(viewNode) == false)
     {
         return true;
@@ -588,7 +546,7 @@ bool MsgHandler::CheckNeedPushLoopAgain(ViewNode &viewNode, std::shared_ptr<View
  */
 bool MsgHandler::IsSeriousWarn(ViewNode &viewNode)
 {
-    std::shared_ptr<ViewInfo> viewInfo = GetWarnInfoFromMap(viewNode);
+    std::shared_ptr<ViewInfo> viewInfo = m_xmlManager->GetViewInfo(viewNode.GetKeyName());
     if (viewInfo != NULL && viewInfo->GetLoop() == 0)
     {
         return true;
@@ -776,6 +734,12 @@ void MsgHandler::ResetAtLeastFlag()
 {
     std::lock_guard<std::mutex> lockGuard(g_mtxTimeDone);
     g_isAtLeastTimeDone = false;
+}
+
+bool MsgHandler::IsAtLeastTimeDone()
+{
+    std::lock_guard<std::mutex> lockGuard(g_mtxTimeDone);
+    return g_isAtLeastTimeDone;
 }
 
 #if 0

@@ -58,15 +58,8 @@ private:
     bool EraseFreshWarnListNode(ViewNode viewNode);
     bool EraseLoopWarnListNode(ViewNode viewNode);
 
-    /* 更新/插入 详细告警信息Map */
-    void UpdateWarnInfoMap(ViewNode &viewNode, ViewInfo viewInfo);
-    /* 获取 详细告警信息Map */
-    std::shared_ptr<ViewInfo> GetWarnInfoFromMap(ViewNode &viewNode);
-    /* 删除 详细告警信息Map */
-    void EraseWarnNodeFromInfoMap(ViewNode &viewNode);
-
     int GetViewPriority(ViewNode &viewNode);
-    bool CheckNeedPushLoopAgain(ViewNode &viewNode, std::shared_ptr<ViewInfo> viewInfo);
+    bool CheckNeedPushLoopAgain(ViewNode &viewNode);
     bool IsSeriousWarn(ViewNode &viewNode);
     bool IsCurrHmiStatusMatchedSuccess();
 
@@ -75,6 +68,7 @@ private:
     int AtLeastTimerStop();
     int AtLeastTimerDelete();
     void ResetAtLeastFlag();
+    bool IsAtLeastTimeDone();
 
     timer_t m_timerId;
 
@@ -93,9 +87,6 @@ private:
     std::vector<ViewNode> m_freshViewList; //尚未显示过的非严重告警列表
     std::mutex m_mtxLoop;
     std::vector<ViewNode> m_loopViewList; //循环显示的非严重告警列表
-
-    std::mutex m_mtxWarnMap;
-    WarnInfoMultiMap m_warnInfoMap; //当前所有列表中的告警信息Map
 };
 
 #endif // !_MSG_HANDLER_H_

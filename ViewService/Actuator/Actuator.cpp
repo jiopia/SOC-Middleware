@@ -19,6 +19,7 @@ Actuator::Actuator() : m_xmlManager(XmlManager::GetInstance()),
                                               MAP_SHARED, m_fdShareMemMcuData, 0);
 
     sem_init(&g_warnShowSem, 0, 0);
+    WarnShowTimerInit();
 
     std::vector<std::string> strTopicList;
     strTopicList.emplace_back(std::string(MQTT_TOPIC_WARN_VIEW));

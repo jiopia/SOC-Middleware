@@ -71,10 +71,10 @@ void XmlManager::XmlAttrParse(ViewInfoPtr viewInfo, TiXmlAttribute *pAttr)
     if (strcmp(pAttr->Name(), "name") == 0)
     {
         viewInfo->SetName(pAttr->Value());
-        viewInfo->SetExtraInfo(pAttr->Value());
     }
     else if (strcmp(pAttr->Name(), "pid") == 0)
     {
+        viewInfo->SetExtraInfo(pAttr->Value());
         viewInfo->SetPid(pAttr->Value());
     }
     else if (strcmp(pAttr->Name(), "repeat") == 0)

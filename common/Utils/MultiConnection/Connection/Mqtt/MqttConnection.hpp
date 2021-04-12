@@ -14,7 +14,7 @@
 
 #define MQTT_TOPIC_WARN_VIEW "BDSTAR/VIEW"
 #define MQTT_TOPIC_WARN_AUDIO "BDSTAR/AUDIO"
-#define MQTT_TOPIC_WARN_AUDIO "BDSTAR/HMI"
+#define MQTT_TOPIC_WARN_HMI "BDSTAR/HMI"
 
 class MqttConnection : public BaseConnection
 {
@@ -31,7 +31,7 @@ public:
     virtual void MsgSend(std::string strTopic, std::string strMsg);
 
     virtual void Subscribe(std::vector<std::string> &strTopicList);
-    void UnSubscribe(std::vector<string> &strTopicList);
+    virtual void UnSubscribe(std::vector<string> &strTopicList);
 
 private:
     struct mosquitto *m_ptrMosq = NULL;

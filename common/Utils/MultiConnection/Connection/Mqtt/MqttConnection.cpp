@@ -5,7 +5,6 @@
 bool BaseConnection::m_isConnected = false;
 
 MqttConnection::MqttConnection(string host, int port, ConnectType type)
-// : m_strHost(host), m_iPort(port), m_connectType(type)
 {
     m_strHost = host;
     m_iPort = port;

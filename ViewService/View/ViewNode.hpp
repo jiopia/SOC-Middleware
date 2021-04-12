@@ -12,7 +12,7 @@ public:
         : strViewName(viewName), strExtraInfo(extraInfo), viewStatus(status) {}
     ~ViewNode() {}
 
-    bool operator==(ViewNode &node) const
+    bool operator==(const ViewNode &node) const
     {
         return ((this->strViewName.compare(node.strViewName) == 0) &&
                 (this->strExtraInfo.compare(node.strExtraInfo) == 0) &&
@@ -22,15 +22,15 @@ public:
     /* For std::priority_queue<T, std::vector<T>, std::greater<T>> */
     bool operator>(const ViewNode &viewNode) const
     {
-        return (XmlManager::GetInstance()->GetViewInfo(this->strViewName + this->strExtraInfo)->GetPriority() >
-                XmlManager::GetInstance()->GetViewInfo(viewNode.strViewName + viewNode.strExtraInfo)->GetPriority());
+        return (XmlManager::GetInstance()->GetViewInfo(this->GetKeyName())->GetPriority() >
+                XmlManager::GetInstance()->GetViewInfo(viewNode.GetKeyName())->GetPriority());
     }
 
     /* For std::multimap<ViewNode, std::shared_ptr<ViewInfo>> */
     bool operator<(const ViewNode &viewNode) const
     {
-        return (XmlManager::GetInstance()->GetViewInfo(this->strViewName + this->strExtraInfo)->GetPriority() <
-                XmlManager::GetInstance()->GetViewInfo(viewNode.strViewName + viewNode.strExtraInfo)->GetPriority());
+        return (XmlManager::GetInstance()->GetViewInfo(this->GetKeyName())->GetPriority() <
+                XmlManager::GetInstance()->GetViewInfo(viewNode.GetKeyName())->GetPriority());
     }
 
     ViewNode(const ViewNode &viewNode)
@@ -52,6 +52,11 @@ public:
     bool Empty()
     {
         return this->strViewName.empty() && this->strExtraInfo.empty();
+    }
+
+    std::string GetKeyName() const
+    {
+        return this->strViewName + this->strExtraInfo;
     }
 
     void SetEmpty()
