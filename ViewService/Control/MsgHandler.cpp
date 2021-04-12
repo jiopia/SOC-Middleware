@@ -66,8 +66,10 @@ void MsgHandler::RemoveCurrentWarn()
     ViewNode tempViewNode;
     {
         std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
-        ViewNode tempViewNode = m_currViewNode;
+        tempViewNode = m_currViewNode;
     }
+
+    InfoPrint("WarnView:[%s]-[%s]\n", tempViewNode.strViewName.c_str(), tempViewNode.strExtraInfo.c_str());
 
     EraseWarnViewNode(tempViewNode);
 
@@ -148,19 +150,21 @@ void MsgHandler::HandleWarnViews()
     case VIEW_ON:
     case VIEW_FLICKER:
     {
+#if 0
         std::shared_ptr<ViewInfo> pCurrViewInfo = m_xmlManager->GetViewInfo(m_currViewNode.GetKeyName());
         /* 下一个告警是：优先级更高的报警信息 */
         if (pCurrViewInfo != NULL &&
-            pNextViewInfo->GetPriority() < pCurrViewInfo->GetPriority())
+            pNextViewInfo->GetPriority() < pCurrViewInfo->GetPriority()) //关注：轮训过程中有优先级低的fresh报警到来，则需要着重考虑一下
         {
             Actuator::GetInstance()->WarnShowTimerStop();
             InfoPrint("Warn View Replace duw to High Priority.\n");
         }
-
+#endif
+        ResetAtLeastFlag();
         AtLeastTimerStart(); //1.5秒最短显示计时开始
+        Actuator::GetInstance()->WarnShowTimerStop();
         Actuator::GetInstance()->WarnShowTimerStart(pNextViewInfo->GetLoop());
         viewNeedExected = nextWarnViewNode;
-
         /*
         报警逻辑：
             1、严重报警：seriousList列表内，优先执行；
@@ -216,8 +220,7 @@ void MsgHandler::Notify(ViewNode &viewNode)
                   ? (viewNode.viewStatus == VIEW_ON ? "ON" : "OFF")
                   : "DEFAULT");
 
-    std::string strKeyName = viewNode.strViewName + viewNode.strExtraInfo;
-    std::shared_ptr<ViewInfo> pViewInfo = m_xmlManager->GetViewInfo(strKeyName);
+    std::shared_ptr<ViewInfo> pViewInfo = m_xmlManager->GetViewInfo(viewNode.GetKeyName());
     if (pViewInfo == NULL)
     {
         return;
@@ -243,7 +246,7 @@ void MsgHandler::Notify(ViewNode &viewNode)
 /** 
  * @brief   更新待显示列表的告警信息(更新/插入)
  */
-void MsgHandler::UpdateWarnViewNode(ViewNode &viewNode)
+void MsgHandler::UpdateWarnViewNode(ViewNode viewNode)
 {
     std::shared_ptr<ViewInfo> pViewInfo = m_xmlManager->GetViewInfo(viewNode.GetKeyName());
     if (pViewInfo == NULL)
@@ -270,7 +273,7 @@ void MsgHandler::UpdateWarnViewNode(ViewNode &viewNode)
         UpdateFrashWarnList(viewNode);
     }
 
-#if 1 /* -- Debug test -- */
+#if 1 /* -- Debug for Printing WarnInfo -- */
     {
         InfoPrint("m_seriousViewList Size:[%d]\r\n", (int)m_seriousViewList.size());
         for (auto iter : m_seriousViewList)
@@ -305,7 +308,7 @@ void MsgHandler::UpdateWarnViewNode(ViewNode &viewNode)
 /** 
  * @brief   更新严重告警列表的告警信息(更新/插入)
  */
-void MsgHandler::UpdateSeriousWarnList(ViewNode &viewNode)
+void MsgHandler::UpdateSeriousWarnList(ViewNode viewNode)
 {
     bool isAlreadyExist = false;
     {
@@ -338,25 +341,44 @@ void MsgHandler::UpdateSeriousWarnList(ViewNode &viewNode)
 /** 
  * @brief   更新尚未显示过的告警列表的告警信息(更新/插入)
  */
-void MsgHandler::UpdateFrashWarnList(ViewNode &viewNode)
+void MsgHandler::UpdateFrashWarnList(ViewNode viewNode)
 {
-    bool isAlreadyExist = false;
+    if (viewNode.viewStatus == VIEW_OFF)
     {
-        std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
-        for (auto iter = m_freshViewList.begin(); iter != m_freshViewList.end(); iter++)
+        /* 在loop列表里的ON报警，此时有此类OFF报警插入，则会插入进fresh列表，因此需要同步删除loop内报警 */
+        ViewNode tmpNode(viewNode.strViewName, viewNode.strExtraInfo, VIEW_ON);
+        std::lock_guard<std::mutex> lockGuard(m_mtxLoop);
+        auto iterFind = find(m_loopViewList.begin(), m_loopViewList.end(), tmpNode);
+        if (iterFind != m_loopViewList.end())
         {
-            ViewNode *tempNode = &(*iter);
-            if (tempNode->strViewName == viewNode.strViewName &&
-                tempNode->strExtraInfo == viewNode.strExtraInfo)
-            {
-                tempNode->viewStatus = viewNode.viewStatus;
-                isAlreadyExist = true;
-            }
+            m_loopViewList.erase(iterFind);
         }
 
-        if (!isAlreadyExist)
+        m_freshViewList.emplace_back(viewNode);
+    }
+    else
+    {
+        std::lock_guard<std::mutex> lockGuard(m_mtxLoop);
+        if (find(m_loopViewList.begin(), m_loopViewList.end(), viewNode) == m_loopViewList.end())
         {
-            m_freshViewList.emplace_back(viewNode);
+            /* 在loop列表里的ON报警，此时再次插入，则不必再插入fresh列表 */
+            bool isAlreadyExist = false;
+            std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
+            for (auto iter = m_freshViewList.begin(); iter != m_freshViewList.end(); iter++)
+            {
+                ViewNode *tempNode = &(*iter);
+                if (tempNode->strViewName == viewNode.strViewName &&
+                    tempNode->strExtraInfo == viewNode.strExtraInfo)
+                {
+                    tempNode->viewStatus = viewNode.viewStatus;
+                    isAlreadyExist = true;
+                }
+            }
+
+            if (!isAlreadyExist)
+            {
+                m_freshViewList.emplace_back(viewNode);
+            }
         }
     }
 
@@ -404,6 +426,7 @@ void MsgHandler::GetLoopWarnListNode(ViewNode &viewNode)
  */
 void MsgHandler::GetNextWarnViewNode(ViewNode &viewNode)
 {
+    /* 1、严重报警 */
     GetSeriousWarnListNode(viewNode);
     if (!viewNode.Empty())
     {
@@ -417,11 +440,13 @@ void MsgHandler::GetNextWarnViewNode(ViewNode &viewNode)
 
     if (!m_freshViewList.empty())
     {
+        /* 2、尚未被执行过的报警 */
         GetFrashWarnListNode(viewNode);
         // EraseFreshWarnListNode(viewNode);
     }
     else if (!m_loopViewList.empty())
     {
+        /* 3、执行过的需要轮训的报警 */
         GetLoopWarnListNode(viewNode);
         // EraseFreshWarnListNode(viewNode);
     }
@@ -429,7 +454,7 @@ void MsgHandler::GetNextWarnViewNode(ViewNode &viewNode)
 
 void MsgHandler::EraseWarnViewNode(ViewNode viewNode)
 {
-    //利用了逻辑“且”的短路评估原则
+    //利用了逻辑“且”的短路评估原则[严重报警->尚未被执行过的报警->轮训类报警]
     if (!EraseSeriousWarnListNode(viewNode) &&
         !EraseFreshWarnListNode(viewNode))
     {

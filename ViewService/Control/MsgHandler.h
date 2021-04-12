@@ -41,9 +41,9 @@ private:
     void Notify(ViewNode &viewNode);
 
     /* 更新/插入 告警列表List */
-    void UpdateWarnViewNode(ViewNode &viewNode);
-    void UpdateSeriousWarnList(ViewNode &viewNode);
-    void UpdateFrashWarnList(ViewNode &viewNode);
+    void UpdateWarnViewNode(ViewNode viewNode);
+    void UpdateSeriousWarnList(ViewNode viewNode);
+    void UpdateFrashWarnList(ViewNode viewNode);
 
     /* 获取 告警列表List */
     void GetSeriousWarnListNode(ViewNode &viewNode);
