@@ -1,30 +1,32 @@
 #ifndef _MSG_DATA_DEFINE_H_
 #define _MSG_DATA_DEFINE_H_
 
-class MqttMsgSendData
+inline void HexToStr(char *dstStr, const unsigned char *srcUch, const int len)
 {
-public:
-    MqttMsgSendData() {}
-    MqttMsgSendData(std::string msgId, std::string msgType, std::string strLen, std::string msgData)
-        : strMsgId(msgId), strMsgType(msgType), strDataLen(strLen), strMsgData(msgData) {}
-    ~MqttMsgSendData() {}
+    for (int i = 0; i < len; i++)
+    {
+        sprintf(dstStr, "%02X", srcUch[i]);
+        dstStr += 2;
+    }
+}
 
-    std::string strMsgId;
-    std::string strMsgType;
-    std::string strDataLen;
-    std::string strMsgData;
-};
+inline std::string HexToStr(const unsigned char uchData)
+{
+    char buff[4] = {0};
+    HexToStr(buff, &uchData, 1);
+    return std::string(buff);
+}
 
 enum MType
 {
-    MTYPE_DUMMY = 0x00,
-    MTYPE_ACTION = 0x01,
-    MTYPE_DATA = 0x02,
-    MTYPE_NODE_ALIVE = 0x03,
-    MTYPE_INTERACTIVE = 0x04,
-    MTYPE_SETUP = 0x05,
-    MTYPE_KEY = 0x06,
-    MTYPE_EOL = 0x07,
+    MTYPE_DUMMY = 0x00,       /* 未知消息类型 */
+    MTYPE_ACTION = 0x01,      /* Action类消息 */
+    MTYPE_DATA = 0x02,        /* DATA类消息 */
+    MTYPE_NODE_ALIVE = 0x03,  /* NodeAlive类消息 */
+    MTYPE_INTERACTIVE = 0x04, /* 交互类消息 */
+    MTYPE_SETUP = 0x05,       /* Setup类消息 */
+    MTYPE_KEY = 0x06,         /* Key类消息 */
+    MTYPE_EOL = 0x07,         /* 诊断类消息 */
 };
 
 enum DataMsgID
