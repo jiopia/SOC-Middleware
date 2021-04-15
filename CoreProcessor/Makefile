@@ -41,17 +41,19 @@ INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/../common/Utils/Thread \
 	-I$(PROJECT_ROOT)/../common/Utils/TinyXML \
 	-I$(PROJECT_ROOT)/../third_party/include \
-	-I$(PROJECT_ROOT)/CoreMsgHandler
+	-I$(PROJECT_ROOT)/CoreMsgHandler \
+	-I$(PROJECT_ROOT)/Interface/include
 
 LIB_FLAG = \
+	-L$(PROJECT_ROOT)/Interface/lib/aarch64 \
 	-L$(PROJECT_ROOT)/../third_party/lib/aarch64
 	#-L$(PROJECT_ROOT)/../third_party/lib/aarch64/x86_64
 
 LIB_FLAGS =
-LIBXX_FLAGS = -lpthread -lmosquitto
+LIBXX_FLAGS = -lECP -lpthread -lmosquitto
 
 C_FLAGS = 
-CXX_FLAGS = -std=c++11
+CXX_FLAGS = -std=c++14
 
 all:
 	$(CXX) $(SRC_PATH) $(INCLUDE_FLAG) $(LIB_FLAG) $(LIBXX_FLAGS) $(CXX_FLAGS) -o $(TARGET)
