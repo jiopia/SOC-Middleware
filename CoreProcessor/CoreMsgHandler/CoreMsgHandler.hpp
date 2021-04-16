@@ -54,7 +54,7 @@ private:
 
     void MsgProcessor(std::string strMsg);
 
-    void ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData);
+    void ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
     void DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
@@ -68,7 +68,7 @@ private:
 
     void EOLMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData);
 
-    std::shared_ptr<BaseConnection> m_mqttClient = NULL;
+    std::shared_ptr<BaseConnection> m_connClient = NULL;
     ECPInterface *ptrECP = NULL;
 };
 
