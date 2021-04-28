@@ -229,6 +229,7 @@ typedef struct mcuStatusData
 	unsigned char LDW_lamp;							//车道偏离指示灯
 	unsigned char LDW_warning;						//车道偏离报警
 } typemcustatusData;
+
 typedef struct responseStatusData
 {
 	unsigned char left_lamp_response :1;                       //左转向灯
@@ -493,5 +494,6 @@ typedef struct
 	typessystemSharedData system_data;
 	pthread_mutex_t systemshmemmutex;
 } systemsharedshem_t;
+
 #pragma pack()
 #endif /* SAVEDDATA_H_ */

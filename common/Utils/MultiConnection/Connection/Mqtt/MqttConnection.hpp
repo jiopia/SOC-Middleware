@@ -39,6 +39,8 @@ private:
     int m_iKeepAlive = 60;
     int m_mid = 0;
 
+    std::vector<std::string> m_strTopicList;
+
     static void on_connect_callback(struct mosquitto *mosq, void *obj, int rc);
     static void on_disconnect_callback(struct mosquitto *mosq, void *obj, int result);
     static void on_publish_callback(struct mosquitto *mosq, void *obj, int mid);

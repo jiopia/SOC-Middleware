@@ -1,4 +1,5 @@
 #include <functional>
+#include <algorithm>
 #include "MqttConnection.hpp"
 #include "Forwarder.hpp"
 
@@ -85,6 +86,7 @@ void MqttConnection::MsgSend(std::string strTopic, std::string strMsg)
 
 void MqttConnection::Subscribe(std::vector<std::string> &strTopicList)
 {
+    m_strTopicList = strTopicList;
     for (auto iter = strTopicList.begin(); iter != strTopicList.end(); iter++)
     {
         std::string strTopic = *iter;
@@ -94,10 +96,17 @@ void MqttConnection::Subscribe(std::vector<std::string> &strTopicList)
 
 void MqttConnection::UnSubscribe(std::vector<std::string> &strTopicList)
 {
+    // std::vector<std::string>().swap(m_strTopicList);
     for (auto iter = strTopicList.begin(); iter != strTopicList.end(); iter++)
     {
         std::string strTopic = *iter;
         mosquitto_unsubscribe(this->m_ptrMosq, &this->m_mid, strTopic.c_str());
+
+        auto iterFind = find(m_strTopicList.begin(), m_strTopicList.end(), strTopic);
+        if (iterFind != m_strTopicList.end())
+        {
+            m_strTopicList.erase(iterFind);
+        }
     }
 }
 

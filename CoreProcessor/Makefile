@@ -42,6 +42,7 @@ INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/../common/Utils/TinyXML \
 	-I$(PROJECT_ROOT)/../third_party/include \
 	-I$(PROJECT_ROOT)/CoreMsgHandler \
+	-I$(PROJECT_ROOT)/DataDefined \
 	-I$(PROJECT_ROOT)/Interface/include
 
 LIB_FLAG = \

@@ -58,18 +58,20 @@ private:
 
     void DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
-    void NodeAliveMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData);
+    void NodeAliveMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
-    void InteractiveMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData);
+    void InteractiveMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
-    void SetupMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData);
+    void SetupMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
-    void KeyMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData);
+    void KeyMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
-    void EOLMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData);
+    void EOLMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
     std::shared_ptr<BaseConnection> m_connClient = NULL;
     ECPInterface *ptrECP = NULL;
+
+    VehicleWorkData_t m_vehicleWorkData_t;
 };
 
 #endif //!_CORE_MSG_HANDLER_H_

@@ -1,22 +1,6 @@
 #ifndef _MSG_DATA_DEFINE_H_
 #define _MSG_DATA_DEFINE_H_
 
-inline void HexToStr(char *dstStr, const unsigned char *srcUch, const int len)
-{
-    for (int i = 0; i < len; i++)
-    {
-        sprintf(dstStr, "%02X", srcUch[i]);
-        dstStr += 2;
-    }
-}
-
-inline std::string HexToStr(const unsigned char uchData)
-{
-    char buff[4] = {0};
-    HexToStr(buff, &uchData, 1);
-    return std::string(buff);
-}
-
 enum MType
 {
     MTYPE_DUMMY = 0x00,       /* 未知消息类型 */
@@ -46,10 +30,8 @@ enum DataMsgID
     MTYPE_DATA_MSGID_DEBUG_TEST = 0x0D,               //debug输入
     MTYPE_DATA_MSGID_SCREEN_TEMP = 0x0E,              //屏幕温度
     MTYPE_DATA_MSGID_STORE = 0x0F,
-    //#ifdef FX11E
     MTYPE_DATA_MSGID_POWERMETER = 0x10,
     MTYPE_DATA_MSGID_CURRENT_VOL,
-    //#else
     MTYPE_DATA_MSGID_IFE,  //喷油嘴
     MTYPE_DATA_MSGID_AFE,  //AFE
     MTYPE_DATA_MSGID_DTE1, //DTE1
