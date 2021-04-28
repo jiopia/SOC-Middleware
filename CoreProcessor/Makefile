@@ -31,7 +31,6 @@ SRC_PATH = \
 	$(COMMON_SRC_PATH)
 
 INCLUDE_FLAG = \
-	-I$(PROJECT_ROOT)/../common/bdsdk/include \
 	-I$(PROJECT_ROOT)/../common/Utils \
 	-I$(PROJECT_ROOT)/../common/Utils/cJSON \
 	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection \

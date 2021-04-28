@@ -202,13 +202,11 @@ typedef struct ODOData
     /************* 驾驶模式 ************/
     unsigned char driveMode : 8;
     /************* 里程累计 ************/
-    int totalMileage;
+    int totalMileage; // 0~999999km
     /************ 里程小计A ************/
-    float mileageSubtotalA;
+    float mileageSubtotalA; // 0.0～9999.9km
     /************ 里程小计B ***********/
-    float mileageSubtotalB;
-    /************ 里程小计B ***********/
-    float mileageSubtotalB;
+    float mileageSubtotalB; // 0.0～9999.9km
     /************ 环境温度 ************/
     float temperatureInside;
     float temperatureOutside;
@@ -233,7 +231,8 @@ typedef struct
 
 typedef struct TelltaleData
 {
-    typedef struct WarnInfo
+    /* 报警信息 */
+    struct WarnInfo
     {
         /************  Byte1 *************/
         struct Byte1
@@ -248,67 +247,68 @@ typedef struct TelltaleData
         /************  Byte3 *************/
         struct Byte3
         {
-            unsigned char driverBeltLight : 1;
-            unsigned char passengerBeltLight : 1;
-            unsigned char espLight : 1;
-            unsigned char espOffLight : 1;
-            unsigned char absLight : 1;
-            unsigned char doorOpenLight : 1;
-            unsigned char epsLight : 1;
-            unsigned char tirePressureAbnormalLight : 1;
+            unsigned char driverBeltLight : 1;           //
+            unsigned char passengerBeltLight : 1;        //
+            unsigned char espLight : 1;                  //ESP
+            unsigned char espOffLight : 1;               //ESP
+            unsigned char absLight : 1;                  //ABS
+            unsigned char doorOpenLight : 1;             //
+            unsigned char epsLight : 1;                  //EPS
+            unsigned char tirePressureAbnormalLight : 1; //TIRE
         } byte3_t;
         /************  Byte4 *************/
         struct Byte4
         {
-            unsigned char gearBoxFaultLight : 1;
-            unsigned char epbLight : 1;
-            unsigned char epbFaulLight : 1;
-            unsigned char airBagFaultLight : 1;
-            unsigned char hdcControlLight : 1;
-            unsigned char avhRedLight : 1;
-            unsigned char avhGreenLight : 1;
-            unsigned char engineAntiTheft : 1;
+            unsigned char gearBoxFaultLight : 1; //
+            unsigned char epbRedLight : 1;       //EPB Green
+            unsigned char epbGreenLight : 1;     //EPB Red
+            unsigned char airBagFaultLight : 1;  //
+            unsigned char hdcControlLight : 1;   //
+            unsigned char avhRedLight : 1;       //AVH(AUTO HOLD) Red
+            unsigned char avhGreenLight : 1;     //AVH(AUTO HOLD) Green
+            unsigned char engineAntiTheft : 1;   //
         } byte4_t;
         /************  Byte5 *************/
         struct Byte5
         {
-            unsigned char chargeFaultLight : 1;      //蓄电池充电故障
-            unsigned char maintenanceIndicator : 1;  //保养指示灯
-            unsigned char ebdFaultLight : 1;         //制动液位低
-            unsigned char cruiseControlLight : 1;    //定速巡航
-            unsigned char coolantTempratureLght : 1; //
-            unsigned char oilFuelLowLight : 1;       //燃油低
-            unsigned char reserved : 1;              //
-            unsigned char gpfLight : 1;              //GPF
+            unsigned char chargeFaultLight : 1;     //蓄电池充电故障
+            unsigned char maintenanceIndicator : 1; //保养指示灯
+            unsigned char ebdFaultLight : 1;        //EBD制动液位低
+            unsigned char cruiseControlLight : 1;   //定速巡航
+            unsigned char waterTempHigh : 1;        //水温高
+            unsigned char oilFuelLowLight : 1;      //燃油低
+            unsigned char reserved : 1;             //
+            unsigned char gpfLight : 1;             //GPF
         } byte5_t;
         /************  Byte6 *************/
         struct Byte6
         {
-            unsigned char hdbFailLight : 1;     //
-            unsigned char svsLight : 1;         //
-            unsigned char oilPressureLow : 1;   //机油压力低
-            unsigned char airBagFaultLight : 1; //盲区监测正常
-            unsigned char hdcControlLight : 1;  //盲区监测故障
-            unsigned char reserved : 1;         //
-            unsigned char epcLight : 1;         //
-            unsigned char engineFailure : 1;    //发动机故障
+            unsigned char hdcFailLight : 1;          //HDC故障
+            unsigned char svsLight : 1;              //SVS发动机故障
+            unsigned char oilPressureLow : 1;        //机油压力低
+            unsigned char blindSpotMonitorNomal : 1; //盲区监测正常
+            unsigned char blindSpotMonitorFault : 1; //盲区监测故障
+            unsigned char reserved : 1;              //
+            unsigned char epcLight : 1;              //EPC
+            unsigned char engineEmissionFailure : 1; //发动机排放故障
         } byte6_t;
         /************  Byte7 *************/
         struct Byte7
         {
-            unsigned char aebWorkLight : 1;   //防撞系统工作指示灯
-            unsigned char aebFaultLight : 1;  //防撞系统故障
+            unsigned char aebWorkLight : 1;   //AEB防撞系统工作指示灯
+            unsigned char aebFaultLight : 1;  //AEB防撞系统故障
             unsigned char warmupLight : 1;    //暖机
             unsigned char speedLimit : 1;     //限速
-            unsigned char ldwLightYellow : 1; //档位偏离指示灯(黄)
-            unsigned char ldwLightRed : 1;    //档位偏离指示灯(红)
-            unsigned char ldwLightGreen : 1;  //档位偏离指示灯(绿)
-            unsigned char reserved : 1;       //发动机故障
+            unsigned char ldwLightYellow : 1; //LDW车道偏离指示灯(黄)
+            unsigned char ldwLightRed : 1;    //LDW车道偏离指示灯(红)
+            unsigned char ldwLightGreen : 1;  //LDW车道偏离指示灯(绿)
+            unsigned char reserved : 1;       //
         } byte7_t;
         /*********************************/
     } warn_info_t;
 
-    typedef struct TurnLight
+    /* 左右转向灯 */
+    struct TurnLight
     {
         /************  Byte1 *************/
         struct Byte1
@@ -333,7 +333,22 @@ typedef struct TelltaleData
 
 } TelltaleData_t;
 
-typedef struct
+typedef struct ECUData
+{
+    /*************  瞬时油耗  *************/
+    float instantFuelConsumption; //0.0 - 99.9 L/100km
+    /************* 平均油耗 ************/
+    float averageFuelConsumption; //0.0 - 99.9 L/100km
+    /************* 续航里程 ************/
+    float rechargeMileage; //0~999.9km
+    /************ 瞬时电耗 ************/
+    float instantPowerConsumption; // 0 ~ 49.8 KWH/100km
+    /************ 平均电耗 ***********/
+    float averagePowerConsumption; // 0 ~ 49.8 KWH/100km
+    /*********************************/
+} ECUData_t;
+
+typedef struct VehicleWorkData
 {
     ODOData_t odoData_t;
     GaugeData_t gaugeData_t;

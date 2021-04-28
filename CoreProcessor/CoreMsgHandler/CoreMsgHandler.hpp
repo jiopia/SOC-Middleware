@@ -9,10 +9,9 @@
 #include "mosquitto.h"
 #include "MqttConnection.hpp"
 
-//bdsdk
-#include "savedData.h"
-#include "recvDataDefine.h"
-#include "systemdefine.h"
+#include "MsgDataDefine.h"
+#include "ActionData.h"
+#include "DataToHMIDefine.h"
 
 #define E02
 

@@ -1,3 +1,7 @@
+/*
+    根据E02_SPI协议_V0.2编写的头文件
+    MCU发送给中间件的信息定义
+*/
 #ifndef _MSG_DATA_DEFINE_H_
 #define _MSG_DATA_DEFINE_H_
 
