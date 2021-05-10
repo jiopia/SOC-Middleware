@@ -153,6 +153,18 @@ inline std::string UIntToHexStr(unsigned int iSrcValue)
     return strHexValue;
 }
 
+inline std::string UCharArrToStr(const unsigned char *chArr, const int len)
+{
+    std::string strData;
+    for (int index = 0; index < len; index++)
+    {
+        unsigned char chByteTmp = chArr[index];
+        strData += HexToStr(chByteTmp);
+    }
+
+    return strData;
+}
+
 inline float IEE754_HexToFloat(const unsigned char *ucSrcHex)
 {
     unsigned long ucSrcValue = ucSrcHex[3] << 24 |

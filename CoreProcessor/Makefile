@@ -31,6 +31,7 @@ SRC_PATH = \
 	$(COMMON_SRC_PATH)
 
 INCLUDE_FLAG = \
+	-I$(PROJECT_ROOT)/Interface/include \
 	-I$(PROJECT_ROOT)/../common/Utils \
 	-I$(PROJECT_ROOT)/../common/Utils/cJSON \
 	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection \
@@ -41,8 +42,7 @@ INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/../common/Utils/TinyXML \
 	-I$(PROJECT_ROOT)/../third_party/include \
 	-I$(PROJECT_ROOT)/CoreMsgHandler \
-	-I$(PROJECT_ROOT)/DataDefined \
-	-I$(PROJECT_ROOT)/Interface/include
+	-I$(PROJECT_ROOT)/DataDefined
 
 LIB_FLAG = \
 	-L$(PROJECT_ROOT)/Interface/lib/aarch64 \
@@ -50,13 +50,13 @@ LIB_FLAG = \
 	#-L$(PROJECT_ROOT)/../third_party/lib/aarch64/x86_64
 
 LIB_FLAGS =
-LIBXX_FLAGS = -lECP -lpthread -lmosquitto
+LIBXX_FLAGS = -lECP -lpthread -lmosquitto -lAudio 
 
 C_FLAGS = 
-CXX_FLAGS = -std=c++14
+CXX_FLAGS = -std=c++14 -g
 
 all:
-	$(CXX) $(SRC_PATH) $(INCLUDE_FLAG) $(LIB_FLAG) $(LIBXX_FLAGS) $(CXX_FLAGS) -o $(TARGET)
+	$(CXX) $(INCLUDE_FLAG) $(SRC_PATH) $(LIB_FLAG) $(LIBXX_FLAGS) $(CXX_FLAGS) -o $(TARGET)
 	$(STRIP) $(TARGET)
 
 .PHONY:clean

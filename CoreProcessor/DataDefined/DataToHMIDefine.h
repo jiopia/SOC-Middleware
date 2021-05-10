@@ -5,6 +5,26 @@
 #ifndef _DATA_TO_HMI_DEFINE_H_
 #define _DATA_TO_HMI_DEFINE_H_
 
+#include <string.h>
+
+#define SPI_DATA_MAX_LENGTH 128
+
+struct IPCData
+{
+    unsigned char m_msgType;
+    unsigned char m_msgID;
+    unsigned char m_msgLength;
+    unsigned char m_msgData[SPI_DATA_MAX_LENGTH];
+
+    IPCData()
+    {
+        m_msgType = 0x00;
+        m_msgID = 0x00;
+        m_msgLength = 0x00;
+        memset(m_msgData, 0, sizeof(m_msgData));
+    }
+};
+
 enum HMI_MSG_TYPE
 {
     HMI_MGS_TYPE_ODO = 0x01,
@@ -208,8 +228,10 @@ typedef struct ODOData
     /************ 里程小计B ***********/
     float mileageSubtotalB; // 0.0～9999.9km
     /************ 环境温度 ************/
-    float temperatureInside;
-    float temperatureOutside;
+    // float temperatureInside;
+    // float temperatureOutside;
+    char temperatureInside[4];
+    char temperatureOutside[4];
     /************ 换挡提醒 ************/
     unsigned char gearChangeRemind;
     /*********************************/
