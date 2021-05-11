@@ -9,6 +9,9 @@
 
 #define SPI_DATA_MAX_LENGTH 128
 
+const float g_fSppedDoorOpenWarn = 9.50;
+const float g_fSpeedOverLimitAlarm = 119.50;
+
 struct IPCData
 {
     unsigned char m_msgType;

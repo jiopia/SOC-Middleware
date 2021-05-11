@@ -8,12 +8,11 @@
 #include "PriorityQueue.hpp"
 #include "mosquitto.h"
 #include "MqttConnection.hpp"
+#include "JsonHandler.h"
 
 #include "MsgDataDefine.h"
 #include "ActionData.h"
 #include "DataToHMIDefine.h"
-
-#define E02
 
 #ifdef E02
 
@@ -32,9 +31,6 @@ typedef union
     uint32_t int32Val[CHANGE_INT_NUMS];
     uint8_t uint8Val[CHANGE_INT_NUMS * sizeof(int32Val)];
 } typeInt2Chars;
-
-#define CODE_GET_PRODATA 0X21411030
-#define CODE_SET_REPORT_PERIOD 0X21411031
 
 #endif //!E02
 
@@ -66,6 +62,10 @@ private:
     void KeyMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
     void EOLMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
+
+    // void AudioPlay(std::string audioFileName);
+
+    JsonHandler *m_jsonHandler = NULL;
 
     std::shared_ptr<BaseConnection> m_connClient = NULL;
     ECPInterface *ptrECP = NULL;

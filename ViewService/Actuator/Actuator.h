@@ -12,15 +12,11 @@
 #include <sys/stat.h>
 #include <signal.h>
 #include "mosquitto.h"
-#include "savedData.h"
-#include "mcuclient/mcuclientdefine.h"
 #include "Util.h"
 #include "Singleton.hpp"
 #include "XmlManager.h"
 #include "MsgHandler.h"
 #include "MqttConnection.hpp"
-
-#define MQ_SERVER_NAME "/VIEW_ACTUAL_QUEU"
 
 class Actuator : public Singleton<Actuator>, public Thread
 {
@@ -31,6 +27,7 @@ public:
     int WarnShowTimerStart(int iTimeWaitBeforeStart);
     int WarnShowTimerStop();
     bool IsIgnOFFCheck();
+    void MsgSend(std::string strTopic, std::string strMsg);
 
 protected:
     int WarnShowTimerInit();
@@ -41,8 +38,6 @@ private:
     void MsgReciever();
     void MsgProcessor(std::string strMsg);
 
-    int m_fdShareMemMcuData = -1;
-    shem_t *m_pShareMemMcuData = NULL;
     timer_t m_timerId;
 
     XmlManager *m_xmlManager;

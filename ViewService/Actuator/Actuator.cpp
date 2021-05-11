@@ -9,15 +9,6 @@ sem_t g_warnShowSem;
 Actuator::Actuator() : m_xmlManager(XmlManager::GetInstance()),
                        m_msgHandler(MsgHandler::GetInstance())
 {
-    /*while*/ if ((this->m_fdShareMemMcuData = shm_open(MCU_DATA_SHARED, O_RDWR, S_IRWXU)) == -1)
-    {
-        ErrPrint("Failed to open shared data [%s]!\n", MCU_DATA_SHARED);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    }
-
-    this->m_pShareMemMcuData = (shem_t *)mmap(0, sizeof(shem_t), PROT_READ | PROT_WRITE,
-                                              MAP_SHARED, m_fdShareMemMcuData, 0);
-
     sem_init(&g_warnShowSem, 0, 0);
     WarnShowTimerInit();
 
@@ -31,13 +22,7 @@ Actuator::Actuator() : m_xmlManager(XmlManager::GetInstance()),
 
 Actuator::~Actuator()
 {
-    if (this->m_pShareMemMcuData != NULL)
-    {
-        munmap(m_pShareMemMcuData, sizeof(shem_t));
-        close(m_fdShareMemMcuData);
-        shm_unlink(MCU_DATA_SHARED);
-        WarnShowTimerDelete();
-    }
+    WarnShowTimerDelete();
 }
 
 void Actuator::Run()
@@ -81,6 +66,14 @@ void Actuator::MsgProcessor(std::string strMsg)
     {
         this->m_msgHandler->SetWarnView(strViewName.c_str(),
                                         strExtraInfo.c_str(), strViewStatus.compare("ON") == 0 ? VIEW_ON : VIEW_OFF);
+    }
+}
+
+void Actuator::MsgSend(std::string strTopic, std::string strMsg)
+{
+    if (this->m_mqttClient->m_isConnected)
+    {
+        this->m_mqttClient->MsgSend(strTopic, strMsg);
     }
 }
 
@@ -166,10 +159,5 @@ int Actuator::WarnShowTimerDelete()
 
 bool Actuator::IsIgnOFFCheck()
 {
-    if (ACC_OFF == this->m_pShareMemMcuData->response_status_data.ignkey_status_response)
-    {
-        return true;
-    }
-
     return false;
 }

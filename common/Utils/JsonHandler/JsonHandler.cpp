@@ -1,12 +1,12 @@
 #include "JsonHandler.h"
 
-char *JsonHandler::GetAudioSendData(std::string strViewName, std::string strExtraInfo, VIEW_STATUS viewStatus)
+std::string JsonHandler::GetWarnSendData(std::string strViewName, std::string strExtraInfo, std::string strViewStatus)
 {
     cJSON *root;
     root = cJSON_CreateObject();
     cJSON_AddItemToObject(root, "keyname1", cJSON_CreateString(strViewName.c_str()));
     cJSON_AddItemToObject(root, "keyname2", cJSON_CreateString(strExtraInfo.c_str()));
-    cJSON_AddItemToObject(root, "onoff", cJSON_CreateString(GetViewStatus(viewStatus).c_str()));
+    cJSON_AddItemToObject(root, "onoff", cJSON_CreateString(strViewStatus.c_str()));
     char *sendData = NULL;
     if (root != NULL)
     {
@@ -18,11 +18,11 @@ char *JsonHandler::GetAudioSendData(std::string strViewName, std::string strExtr
 }
 
 /* {"pid":"warningpage","warningpage":[{"pid":"tiresystemfault","status":"ON"}],"status":"ON"} */
-char *JsonHandler::GetWarnJsonInfo(std::string strViewName, std::string strExtraInfo, VIEW_STATUS viewStatus)
+char *JsonHandler::GetWarnJsonInfo(std::string strViewName, std::string strExtraInfo, std::string strViewStatus)
 {
     cJSON *arrayElement = cJSON_CreateObject();
     cJSON_AddItemToObject(arrayElement, "pid", cJSON_CreateString(strExtraInfo.c_str()));
-    cJSON_AddItemToObject(arrayElement, "status", cJSON_CreateString(GetViewStatus(viewStatus).c_str()));
+    cJSON_AddItemToObject(arrayElement, "status", cJSON_CreateString(strViewStatus.c_str()));
 
     cJSON *pageArray = cJSON_CreateArray();
     cJSON_AddItemToArray(pageArray, arrayElement);
@@ -30,7 +30,7 @@ char *JsonHandler::GetWarnJsonInfo(std::string strViewName, std::string strExtra
     cJSON *warningPageRoot = cJSON_CreateObject();
     cJSON_AddItemToObject(warningPageRoot, "pid", cJSON_CreateString("warningpage"));
     cJSON_AddItemToObject(warningPageRoot, "warningpage", pageArray);
-    cJSON_AddItemToObject(warningPageRoot, "status", cJSON_CreateString(GetViewStatus(viewStatus).c_str()));
+    cJSON_AddItemToObject(warningPageRoot, "status", cJSON_CreateString(strViewStatus.c_str()));
 
     char *warnData = NULL;
     if (warningPageRoot != NULL && pageArray != NULL)
@@ -75,15 +75,4 @@ void JsonHandler::GetJsonParse(cJSON *root, const char *keyname, std::string &st
     }
 
     strValue = item->valuestring;
-}
-
-std::string JsonHandler::GetViewStatus(VIEW_STATUS viewStatus)
-{
-    switch (viewStatus)
-    {
-    case VIEW_ON:
-        return std::string("ON");
-    default:
-        return std::string("OFF");
-    }
 }

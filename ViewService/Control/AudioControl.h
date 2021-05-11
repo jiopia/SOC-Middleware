@@ -13,7 +13,7 @@ public:
     AudioControl();
     ~AudioControl();
 
-    void SendAudio(std::string strWarn, std::string strExtraInfo, VIEW_STATUS viewStatus);
+    void SendAudio(std::string strWarn, std::string strExtraInfo, std::string strViewStatus);
 
 private:
     JsonHandler *m_jsonHandler;

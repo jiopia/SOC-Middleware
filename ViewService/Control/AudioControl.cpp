@@ -9,11 +9,9 @@ AudioControl::~AudioControl()
 {
 }
 
-void AudioControl::SendAudio(std::string strWarn, std::string strAudioInfo, VIEW_STATUS viewStatus)
+void AudioControl::SendAudio(std::string strWarn, std::string strAudioInfo, std::string strViewStatus)
 {
-    char *sendData = m_jsonHandler->GetAudioSendData(strWarn, strAudioInfo, viewStatus);
+    std::string strDataSend = m_jsonHandler->GetWarnSendData(strWarn, strAudioInfo, strViewStatus);
 
-    InfoPrint("AudioControl SendAudio:[%s]\r\n", sendData);
-
-    BDSTAR_FREE(sendData);
+    InfoPrint("AudioControl SendAudio:[%s]\r\n", strDataSend.c_str());
 }

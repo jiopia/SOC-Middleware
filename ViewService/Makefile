@@ -1,6 +1,6 @@
 TARGET = ViewService
 
-CROSS_CHAIN = #aarch64-linux-gnu-
+CROSS_CHAIN = aarch64-linux-gnu-
 
 CC = $(CROSS_CHAIN)gcc
 CXX = $(CROSS_CHAIN)g++
@@ -17,6 +17,7 @@ CUR_CPP_PATH:= $(filter %.cpp, $(CUR_SRC_LIST))
 
 COMMON_SRC_PATH = \
 	$(PROJECT_ROOT)/../common/Utils/cJSON/cJSON.cpp  \
+	$(PROJECT_ROOT)/../common/Utils/JsonHandler/JsonHandler.cpp  \
 	$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection/Mqtt/MqttConnection.cpp  \
 	$(PROJECT_ROOT)/../common/Utils/MultiConnection/Forwarder/Forwarder.cpp  \
 	$(PROJECT_ROOT)/../common/Utils/Thread/Thread.cpp  \
@@ -34,6 +35,7 @@ INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/../common/bdsdk/include \
 	-I$(PROJECT_ROOT)/../common/Utils \
 	-I$(PROJECT_ROOT)/../common/Utils/cJSON \
+	-I$(PROJECT_ROOT)/../common/Utils/JsonHandler \
 	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection \
 	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection/Mqtt \
 	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Forwarder \
@@ -43,12 +45,11 @@ INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/../third_party/include \
 	-I$(PROJECT_ROOT)/Actuator \
 	-I$(PROJECT_ROOT)/Control \
-	-I$(PROJECT_ROOT)/JsonHandler \
 	-I$(PROJECT_ROOT)/View \
 	-I$(PROJECT_ROOT)/XmlParse
 
 LIB_FLAG = \
-	-L$(PROJECT_ROOT)/../third_party/lib/x86_64
+	-L$(PROJECT_ROOT)/../third_party/lib/aarch64
 	#-L$(PROJECT_ROOT)/../third_party/lib/aarch64/x86_64
 
 LIB_FLAGS =

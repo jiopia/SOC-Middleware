@@ -9,14 +9,13 @@ extern "C"
 static void AudioPlay(std::string audioFileName);
 static void ReadCallBackFunc(const ECPVehicleValue &rData);
 
-CoreMsgHandler::CoreMsgHandler()
+CoreMsgHandler::CoreMsgHandler() : m_jsonHandler(JsonHandler::GetInstance())
 {
     memset(&m_vehicleWorkData_t, 0, sizeof(m_vehicleWorkData_t));
 
     std::unique_ptr<ECPComm> comm = std::make_unique<ECPComm>(); //实例化一个Comm设备
     ptrECP = new ECPInterface(std::move(comm));                  //实例化ECP对象
 
-    // auto ReadCallBackFunc = std::bind(&CoreMsgHandler::E02_MsgProcessor, this, std::placeholders::_1);
     ptrECP->registerGetDataCallBackFunc(ReadCallBackFunc, ECP_TYPE_MCU); //注册数据接收函数的回调函数，同时需要传一个回调函数的类型ECP_TYPE_MCU;
 
     std::vector<std::string> strTopicList;
@@ -103,14 +102,22 @@ void CoreMsgHandler::MsgReciever()
 void CoreMsgHandler::MsgProcessor(std::string strMsg)
 {
     InfoPrint("Message:[%s] Comming\r\n", strMsg.c_str());
-    if (!strMsg.empty())
+    if (!strMsg.empty() && strMsg.length() == 4)
     {
-        ECPVehicleValue requestValue_t;
-        requestValue_t.length = 0;
-        requestValue_t.MsgType = MTYPE_DATA;
-        requestValue_t.MsgID = MTYPE_DATA_MSGID_SPEED_AND_RPM;
+        typeInt2Chars nValChanges;
+        nValChanges.int32Val[0] = strtol(strMsg.substr(0, 2).c_str(), 0, 10);    //B3CC MsgType
+        nValChanges.int32Val[1] = strtol(strMsg.substr(2, 2).c_str(), 0, 10);    //B3CC MsgID
+        vector<uint8_t> getVals(nValChanges.uint8Val, nValChanges.uint8Val + 8); //value data
 
-        ptrECP->setValue(requestValue_t, ECP_TYPE_MCU);
+        ECPVehicleValue requestValue_t;
+        requestValue_t.MsgType = GET_PROPDATA; //E02_Get_MsgType
+        requestValue_t.MsgID = 0x00;           //E02_Get_MsgID
+        requestValue_t.RawData = getVals;      //E02_Get_MsgRawData
+        requestValue_t.length = sizeof(requestValue_t.MsgType) +
+                                sizeof(requestValue_t.MsgID) +
+                                requestValue_t.RawData.size(); //E02_Get_DataLen
+
+        ptrECP->setMcuValue(requestValue_t);
     }
 }
 
@@ -194,6 +201,30 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
         memcpy(ipcData.m_msgData,
                &m_vehicleWorkData_t.telltaleData_t.warn_info_t,
                sizeof(m_vehicleWorkData_t.telltaleData_t.warn_info_t)); //B3CC MsgData
+
+        if (m_vehicleWorkData_t.telltaleData_t.warn_info_t.byte3_t.doorOpenLight == 0x01)
+        {
+            if (m_vehicleWorkData_t.gaugeData_t.vehicleSpeed > g_fSppedDoorOpenWarn)
+            {
+                /* 门开报警 */
+                std::string strMsgSend = m_jsonHandler->GetWarnSendData("doorwarn", "DRIVER_DOOR", "ON");
+                m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_VIEW), strMsgSend);
+            }
+            else
+            {
+                /* 门开提示 */
+                std::string strMsgSend = m_jsonHandler->GetWarnSendData("doorinfo", "DRIVER_DOOR", "ON");
+                m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_VIEW), strMsgSend);
+            }
+        }
+        else
+        {
+            std::string strMsgSend = m_jsonHandler->GetWarnSendData("doorwarn", "DRIVER_DOOR", "OFF");
+            m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_VIEW), strMsgSend);
+
+            strMsgSend = m_jsonHandler->GetWarnSendData("doorwarn", "DRIVER_DOOR", "OFF");
+            m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_VIEW), strMsgSend);
+        }
     }
     break;
     /* 故障信息(发动机故障指示灯、发动机排放故障、蓄电池故障、制动液位低) */
@@ -388,12 +419,17 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
             break;
         }
 
-        std::string strVehicleSpeedValue = FloatToStr(IEE754_HexToFloat(&ucMsgData[4])); //MsgByte[4] ~ MsgByte[7]
+        float fVehicleSpeed = IEE754_HexToFloat(&ucMsgData[4]);
+        std::string strVehicleSpeedValue = FloatToStr(fVehicleSpeed); //MsgByte[4] ~ MsgByte[7]
         InfoPrint("VehicleSpeed:");
         DebugPrintMsg(&ucMsgData[4], 4);
-        std::string strEngineSpeedValue = FloatToStr(IEE754_HexToFloat(ucMsgData)); //MsgByte[0] ~ MsgByte[3]
+        m_vehicleWorkData_t.gaugeData_t.vehicleSpeed = fVehicleSpeed;
+
+        float fEngineSpeed = IEE754_HexToFloat(ucMsgData);
+        std::string strEngineSpeedValue = FloatToStr(fEngineSpeed); //MsgByte[0] ~ MsgByte[3]
         InfoPrint("EngineSpeed:");
         DebugPrintMsg(ucMsgData, 4);
+        m_vehicleWorkData_t.gaugeData_t.engineSpeed = fEngineSpeed;
 
         InfoPrint("Float Vehicle Speed:%s", strVehicleSpeedValue.c_str());
         InfoPrint("Float  Engine Speed:%s", strEngineSpeedValue.c_str());
@@ -420,6 +456,21 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
             std::string strMsgSend;
             strMsgSend.append(strMsgType).append(strMsgId).append(strLen).append(strMsgData);
             m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_MW_TO_HMI), strMsgSend);
+        }
+
+        char *pFloat;
+        float fSpeed = strtof(strVehicleSpeedValue.c_str(), &pFloat);
+
+        if (fSpeed > g_fSpeedOverLimitAlarm)
+        {
+            /* 超速报警 */
+            std::string strMsgSend = m_jsonHandler->GetWarnSendData("speedlimit", "speedlimit", "ON");
+            m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_VIEW), strMsgSend);
+        }
+        else
+        {
+            std::string strMsgSend = m_jsonHandler->GetWarnSendData("speedlimit", "speedlimit", "OFF");
+            m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_VIEW), strMsgSend);
         }
     }
     break;

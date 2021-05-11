@@ -6,52 +6,51 @@
 using namespace std;
 
 /*length = sizeof(MsgType) + sizeof(MsgID) + RawData.size()*/
-struct ECPVehicleValue {
-	short length;           
-	uint32_t MsgType;          
-	uint32_t MsgID;             
-	vector<uint8_t> RawData;    //data	
+struct ECPVehicleValue
+{
+    short length;
+    uint32_t MsgType;
+    uint32_t MsgID;
+    vector<uint8_t> RawData; //data
 };
 
-enum ECPCallBackType {
-    ECP_TYPE_MCU, 
-    ECP_TYPE_ANDROID, 
+enum ECPCallBackType
+{
+    ECP_TYPE_MCU,
+    ECP_TYPE_ANDROID,
     ECP_TYPE_MAX
 };
 
 //MCU定义的协议：
-#define GET_PROPDATA    0X21411030                   
-#define SET_REPORT_PERIOD   0X21411031                
+#define GET_PROPDATA 0X21411030
+#define SET_REPORT_PERIOD 0X21411031
 
-typedef void (*ReadDataCallBack)(const ECPVehicleValue& rData); 
+typedef void (*ReadDataCallBack)(const ECPVehicleValue &rData);
 
-class ECPInterface {
+class ECPInterface
+{
 public:
-    ECPInterface(std::unique_ptr<ECPComm> comm) 
+    ECPInterface(std::unique_ptr<ECPComm> comm)
         : mExit(false),
-        mComm(comm.release()),
-        mThread{&ECPInterface::rxThread, this} {
-            /*set get all data from mcu*/
-            vector<uint8_t> nVals(0);
-            ECPVehicleValue InitData = {.length = (short)(sizeof(InitData.MsgType) + sizeof(InitData.MsgID) + nVals.size()), .MsgType = GET_PROPDATA, .MsgID = 0, .RawData = nVals} ;
-            setValue(InitData, ECP_TYPE_MCU);
-          }
+          mComm(comm.release()),
+          mThread{&ECPInterface::rxThread, this} {}
+
     virtual ~ECPInterface();
-    void setValue(const ECPVehicleValue& Value, ECPCallBackType type); //write data.....
+    void setMcuValue(const ECPVehicleValue &Value); //write data.....
+    void setAndroidValue(const ECPVehicleValue &Value);
     void rxThread();
-	void registerGetDataCallBackFunc(ReadDataCallBack CallBackFunc, ECPCallBackType type);
+    void registerGetDataCallBackFunc(ReadDataCallBack CallBackFunc, ECPCallBackType type);
 
 private:
-    void hex_array_printf(int loglevel, const char* func, const char* prefix, unsigned char* value, uint32_t size);
-    void parseRxECPBuf(std::vector<uint8_t>& msg); 
+    void hex_array_printf(int loglevel, const char *func, const char *prefix, unsigned char *value, uint32_t size);
+    void parseRxECPBuf(std::vector<uint8_t> &msg);
     void parseMcuData(unsigned char *buff, uint32_t size);
     void parseAndroidData(unsigned char *buff, uint32_t size);
 
 private:
-    std::atomic<bool> mExit { false };
+    std::atomic<bool> mExit{false};
     std::unique_ptr<ECPComm> mComm;
-    std::atomic<bool> isEcpSupport { true };
-    ReadDataCallBack ECPGetDataCallBackFunction[ECP_TYPE_MAX];				//callback function
+    std::atomic<bool> isEcpSupport{true};
+    ReadDataCallBack ECPGetDataCallBackFunction[ECP_TYPE_MAX]; //callback function
     std::thread mThread;
 };
-

@@ -5,7 +5,6 @@
 #include "savedData.h"
 #include "Thread.h"
 #include "recvDataDefine.h"
-#include "systemdefine.h"
 #include "Util.h"
 #include "Singleton.hpp"
 #include "AudioControl.h"
@@ -58,6 +57,9 @@ private:
     bool EraseFreshWarnListNode(ViewNode viewNode);
     bool EraseLoopWarnListNode(ViewNode viewNode);
 
+    bool IsNodeExistInFreshList(ViewNode viewNode);
+    bool IsNodeExistInLoopList(ViewNode viewNode);
+
     int GetViewPriority(ViewNode &viewNode);
     bool CheckNeedPushLoopAgain(ViewNode &viewNode);
     bool IsSeriousWarn(ViewNode &viewNode);
@@ -75,8 +77,6 @@ private:
     AudioControl *m_audioControl;
     XmlManager *m_xmlManager;
     JsonHandler *m_jsonHandler;
-
-    HmiStatus m_curHmiStatus = HMI_STATUS_DEFAULT;
 
     std::mutex m_mtxCurrWarn;
     ViewNode m_currViewNode; //当前正在显示的告警

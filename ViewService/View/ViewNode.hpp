@@ -66,6 +66,17 @@ public:
         this->viewStatus = VIEW_DEFAULT;
     }
 
+    static std::string GetViewStatusStr(VIEW_STATUS viewStatus)
+    {
+        switch (viewStatus)
+        {
+        case VIEW_ON:
+            return std::string("ON");
+        default:
+            return std::string("OFF");
+        }
+    }
+
     std::string strViewName;
     std::string strExtraInfo;
     VIEW_STATUS viewStatus = VIEW_DEFAULT;

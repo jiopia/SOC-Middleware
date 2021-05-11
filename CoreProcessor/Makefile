@@ -17,6 +17,7 @@ CUR_CPP_PATH:= $(filter %.cpp, $(CUR_SRC_LIST))
 
 COMMON_SRC_PATH = \
 	$(PROJECT_ROOT)/../common/Utils/cJSON/cJSON.cpp  \
+	$(PROJECT_ROOT)/../common/Utils/JsonHandler/JsonHandler.cpp  \
 	$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection/Mqtt/MqttConnection.cpp  \
 	$(PROJECT_ROOT)/../common/Utils/MultiConnection/Forwarder/Forwarder.cpp  \
 	$(PROJECT_ROOT)/../common/Utils/Thread/Thread.cpp  \
@@ -34,6 +35,7 @@ INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/Interface/include \
 	-I$(PROJECT_ROOT)/../common/Utils \
 	-I$(PROJECT_ROOT)/../common/Utils/cJSON \
+	-I$(PROJECT_ROOT)/../common/Utils/JsonHandler  \
 	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection \
 	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection/Mqtt \
 	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Forwarder \
@@ -43,6 +45,8 @@ INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/../third_party/include \
 	-I$(PROJECT_ROOT)/CoreMsgHandler \
 	-I$(PROJECT_ROOT)/DataDefined
+
+PLUG_FLAG = -D E02
 
 LIB_FLAG = \
 	-L$(PROJECT_ROOT)/Interface/lib/aarch64 \
@@ -56,7 +60,7 @@ C_FLAGS =
 CXX_FLAGS = -std=c++14 -g
 
 all:
-	$(CXX) $(INCLUDE_FLAG) $(SRC_PATH) $(LIB_FLAG) $(LIBXX_FLAGS) $(CXX_FLAGS) -o $(TARGET)
+	$(CXX) $(PLUG_FLAG) $(INCLUDE_FLAG) $(SRC_PATH) $(LIB_FLAG) $(LIBXX_FLAGS) $(CXX_FLAGS) -o $(TARGET)
 	$(STRIP) $(TARGET)
 
 .PHONY:clean
