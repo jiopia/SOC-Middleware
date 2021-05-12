@@ -33,6 +33,7 @@ SRC_PATH = \
 
 INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/Interface/include \
+	-I$(PROJECT_ROOT)/../common/bdsdk/include \
 	-I$(PROJECT_ROOT)/../common/Utils \
 	-I$(PROJECT_ROOT)/../common/Utils/cJSON \
 	-I$(PROJECT_ROOT)/../common/Utils/JsonHandler  \
@@ -43,8 +44,7 @@ INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/../common/Utils/Thread \
 	-I$(PROJECT_ROOT)/../common/Utils/TinyXML \
 	-I$(PROJECT_ROOT)/../third_party/include \
-	-I$(PROJECT_ROOT)/CoreMsgHandler \
-	-I$(PROJECT_ROOT)/DataDefined
+	-I$(PROJECT_ROOT)/CoreMsgHandler
 
 PLUG_FLAG = -D E02
 

@@ -22,7 +22,8 @@ static bool g_isAllWarnHidden = false;
 
 MsgHandler::MsgHandler() : m_audioControl(AudioControl::GetInstance()),
                            m_xmlManager(XmlManager::GetInstance()),
-                           m_jsonHandler(JsonHandler::GetInstance())
+                           m_jsonHandler(JsonHandler::GetInstance()),
+                           m_warnPageControl(WarnPageControl::GetInstance())
 {
     AtLeastTimerInit();
 }
@@ -135,19 +136,19 @@ void MsgHandler::HandleWarnViews()
     {
     case VIEW_OFF:
     {
-        DebugPrint("---------> Debug 0\n");
-        if (m_currViewNode.Empty() ||
-            (nextWarnViewNode.strViewName == m_currViewNode.strViewName &&
-             nextWarnViewNode.strExtraInfo == m_currViewNode.strExtraInfo))
-        {
-            DebugPrint("---------> Debug 1\n");
-            EraseWarnViewNode(nextWarnViewNode);
-            viewNeedExected = nextWarnViewNode;
-            Actuator::GetInstance()->WarnShowTimerStop();
+        // DebugPrint("---------> Debug 0\n");
+        // if (m_currViewNode.Empty() ||
+        //     (nextWarnViewNode.strViewName == m_currViewNode.strViewName &&
+        //      nextWarnViewNode.strExtraInfo == m_currViewNode.strExtraInfo))
+        // {
+        DebugPrint("---------> Debug 1\n");
+        EraseWarnViewNode(nextWarnViewNode);
+        viewNeedExected = nextWarnViewNode;
+        Actuator::GetInstance()->WarnShowTimerStop();
 
-            std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
-            m_currViewNode.SetEmpty();
-        }
+        std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
+        m_currViewNode.SetEmpty();
+        // }
     }
     break;
     case VIEW_ON:
@@ -187,7 +188,10 @@ void MsgHandler::HandleWarnViews()
         break;
     }
 
-    Notify(viewNeedExected);
+    if (!viewNeedExected.Empty())
+    {
+        Notify(viewNeedExected);
+    }
 }
 
 /** 
@@ -228,6 +232,13 @@ void MsgHandler::Notify(ViewNode &viewNode)
                                   m_currViewNode.GetViewStatusStr(m_currViewNode.viewStatus));
     }
 
+    std::string strMsgSend = m_warnPageControl->GetWarnPageDataToHMI(viewNode);
+    if (!strMsgSend.empty())
+    {
+        Actuator::GetInstance()->MsgSend(std::string(MQTT_TOPIC_WARN_MW_TO_HMI), strMsgSend);
+    }
+
+#if 0
     char *warnData = m_jsonHandler->GetWarnJsonInfo(m_currViewNode.strViewName,
                                                     m_currViewNode.strExtraInfo,
                                                     m_currViewNode.GetViewStatusStr(m_currViewNode.viewStatus));
@@ -249,6 +260,7 @@ void MsgHandler::Notify(ViewNode &viewNode)
     }
 
     BDSTAR_FREE(warnData);
+#endif
 }
 
 /** 
@@ -414,7 +426,6 @@ void MsgHandler::UpdateFrashWarnList(ViewNode viewNode)
         }
     }
 #endif
-
     if (viewNode.viewStatus == VIEW_OFF)
     {
         ViewNode tmpWarnOnNode(viewNode.strViewName, viewNode.strExtraInfo, VIEW_ON);

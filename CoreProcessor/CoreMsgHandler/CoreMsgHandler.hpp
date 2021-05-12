@@ -71,6 +71,12 @@ private:
     ECPInterface *ptrECP = NULL;
 
     VehicleWorkData_t m_vehicleWorkData_t;
+
+    VehicleAccStatus m_vehicleStatus = VEHICLE_DEFAULT;
+
+protected:
+    void SendViewPageInfo(std::string strViewName, std::string strExtraInfo, std::string strStatus);
+    void SendAudioWarnInfo(std::string strAudioName, std::string strStatus);
 };
 
 #endif //!_CORE_MSG_HANDLER_H_

@@ -167,6 +167,9 @@
 		<view name="LimpMode" pid="LimpMode" freq="1HZ" repeat="ON" loop="5s" prority="63" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
 		<!-- 整车故障等级 动力中断立即靠边停车 -->
 		<view name="315_PowerLost_Parking" pid="315_PowerLost_Parking" freq="1HZ" repeat="ON" loop="5s" prority="64" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
+		<view name="dtc_epb" pid="dtc_epb"  freq="1HZ" repeat="OFF" loop="5s" prority="65" type="fault" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>	
+		<view name="oillow" pid="oillow"  freq="1HZ" repeat="OFF" loop="5s" prority="66" type="fault" notifyType="notifyOne" mutex="OFF" audiobind="oillow" power="wm1" least="1S" first="5s"/>	
+		<view name="WrongGear_P" pid="WrongGear_P"  freq="1HZ" repeat="OFF" loop="5s" prority="67" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>	
 		<!-- =================================================================================================================================================================================================== -->
 	</warningpage>
 </KEY_TYPE>

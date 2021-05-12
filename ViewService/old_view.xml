@@ -1,0 +1,130 @@
+<KEY_TYPE name="ACC" key="ACC" showview = "cgi" pid="acc_cgi">
+	<warningpage name="warningpage" pid="warningpage">
+		<view name="doorwarn" pid="doorwarn"  freq="1HZ" repeat="ON" loop="0s" prority="2" type="warning" notifyType="notifyAll"  mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s" >
+			<view name="ALL" pid="ALL"/>					
+			<view name="DRIVER_DOOR" pid="DRIVER_DOOR"/>
+			<view name="PASSENGER_DOOR" pid="PASSENGER_DOOR"/>
+			<view name="REAR_RIGHT_DOOR" pid="REAR_RIGHT_DOOR"/>
+			<view name="REAR_LEFT_DOOR" pid="REAR_LEFT_DOOR"/>
+			<view name="HOOD" pid="HOOD"/>
+			<view name="BACK_DOOR" pid="BACK_DOOR"/>
+			<view name="nowarning" pid="nowarning"/><!-- close all-->
+		</view>
+		
+		<view name="gearbox_temp" pid="gearbox_temp"  freq="1HZ" repeat="ON" loop="0s" prority="4" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" audiobind="gearbox_temp" least="1S" first="5s"/>
+		<view name="gearbox_overheat" pid="gearbox_overheat"  freq="1HZ" repeat="ON" loop="0s" prority="3" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" audiobind="gearbox_overheat" least="1S" first="5s"/>
+
+		<view name="pepsnotfindb" pid="pepsnotfindb" freq="1HZ" repeat="ON" loop="5s" prority="8" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsnotfindb" least="1S" first="5s"/>
+		<view name="pepsnotfinda" pid="pepsnotfinda" freq="1HZ" repeat="ON" loop="0s" prority="1" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" audiobind="pepsnotfinda" least="1S" first="5s"/>
+		<view name="pepsnotfindc" pid="pepsnotfindc" freq="1HZ" repeat="ON" loop="5s" prority="14" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsnotfindc" least="1S" first="5s"/>
+		<view name="pepspoweroff" pid="pepspoweroff" freq="1HZ" repeat="ON" loop="5s" prority="13" type="notice" notifyType="notifyOne" mutex="OFF" power="wm2" audiobind="pepspoweroff" least="1S" first="5s"/>
+		<view name="pepsincar" pid="pepsincar" freq="1HZ" repeat="ON" loop="5s" prority="12" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsincar" least="1S" first="5s"/>
+		<view name="pepsbatterylow" pid="pepsbatterylow" freq="1HZ" repeat="ON" loop="5s" prority="15" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsbatterylow" least="1S" first="5s"/>
+		<view name="pepsswitchtoNP" pid="pepsswitchtoNP" freq="1HZ" repeat="ON" loop="5s" prority="9" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" audiobind="pepsswitchtoNP" least="1S" first="5s"/>
+		<view name="pepsstepbreak" pid="pepsstepbreak" freq="1HZ" repeat="ON" loop="5s" prority="10" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsstepbreak" least="1S" first="5s"/>
+		<view name="pepsswitchtoPStart" pid="pepsswitchtoPStart" freq="1HZ" repeat="ON" loop="5s" prority="11" type="notice" notifyType="notifyOne" mutex="OFF" power="wm2" audiobind="pepsswitchtoPStart" least="1S" first="5s"/>
+		<view name="pepsnotcomplete" pid="pepsnotcomplete" freq="1HZ" repeat="ON" loop="5s" prority="7" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsnotcomplete" least="1S" first="5s"/>
+
+		<view name="speedlimit" pid="speedlimit" repeat="OFF" loop="5s" prority="16" type="warning" notifyType="notifyOne" mutex="OFF" power="wm1" audiobind="overspeed" least="1S" first="5s"/>
+
+		<view name="followme" pid="followme" freq="1HZ" repeat="ON" loop="5s" prority="18" type="notice" notifyType="notifyOne" mutex="OFF" power="wm2" least="1S" first="5s"/>
+
+		<view name="tiresystemfault" pid="tiresystemfault" showtime="10s" loop="5s" prority="19" type="fault" notifyType="notifyOne" mutex="OFF" repeat="ON" power="wm1" least="1S" first="5s"/>
+
+		<view name="brakefluidlow" pid="brakefluidlow" repeat="ON" loop="5s" prority="20" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
+
+		<view name="epb_stepbreak" pid="epb_stepbreak"  freq="1HZ" repeat="ON" loop="5s" prority="21" type="fault" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>		
+		<view name="epb_door" pid="epb_door"  freq="1HZ" repeat="ON" loop="5s" prority="21" type="fault" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>		
+		<view name="epb_slope" pid="epb_slope"  freq="1HZ" repeat="ON" loop="5s" prority="21" type="fault" notifyType="notifyOne" mutex="ON" power="wm12" least="1S" first="5s"/>	
+		
+		<view name="autohold_fail" pid="autohold_fail"  freq="1HZ" repeat="ON" loop="5s" prority="22" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+		<view name="autohold_fault" pid="autohold_fault"  freq="1HZ" repeat="ON" loop="5s" prority="23" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>	
+		<view name="autohold_active" pid="autohold_active"  freq="1HZ" repeat="OFF" loop="5s" prority="24" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>	
+
+		<view name="esp_cdp" pid="esp_cdp"  freq="1HZ" repeat="ON" loop="5s" prority="25" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
+
+		<view name="phone" pid="phone"  freq="1HZ" repeat="ON" loop="5s" prority="26" type="fault" notifyType="notifyOne" mutex="OFF" power="wm2" audiobind="phone" least="1S" first="5s"/>		
+		
+		<view name="doorinfo" pid="doorinfo"  freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyAll"  mutex="OFF" power="wm12" least="1S" first="5s">
+			<view name="ALL" pid="ALL"/>								
+			<view name="DRIVER_DOOR" pid="DRIVER_DOOR"/>
+			<view name="PASSENGER_DOOR" pid="PASSENGER_DOOR"/>
+			<view name="REAR_RIGHT_DOOR" pid="REAR_RIGHT_DOOR"/>
+			<view name="REAR_LEFT_DOOR" pid="REAR_LEFT_DOOR"/>
+			<view name="HOOD" pid="HOOD"/>
+			<view name="BACK_DOOR" pid="BACK_DOOR"/>
+			<view name="nowarning" pid="nowarning"/><!-- close all-->
+		</view>
+		
+		<view name="mainbelt" pid="mainbelt"  freq="1HZ" repeat="OFF" loop="5s" prority="28" type="fault" notifyType="notifyOne" mutex="OFF" audiobind="drive_belt" power="wm1" least="1S" first="5s"/>
+		<view name="passengerbelt" pid="passengerbelt"  freq="1HZ" repeat="OFF" loop="5s" prority="29" type="fault" notifyType="notifyOne" mutex="OFF" audiobind="copilot_belt" power="wm1" least="1S" first="5s"/>
+		
+		<view name="airbag" pid="airbag" repeat="ON" loop="5s" prority="30" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
+		
+		<view name="abs_check" pid="abs_check"  freq="1HZ" repeat="ON" loop="5s" prority="31" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+
+		<view name="esp_check" pid="esp_check"  freq="1HZ" repeat="ON" loop="5s" prority="32" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+
+		<view name="hdc_fault" pid="hdc_fault"  freq="1HZ" repeat="ON" loop="5s" prority="33" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
+		<view name="hdc_active" pid="hdc_active"  freq="1HZ" repeat="OFF" loop="5s" prority="34" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
+		
+		<view name="eps_check" pid="eps_check"  freq="1HZ" repeat="ON" loop="5s" prority="35" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
+		
+		<view name="gearbox_check" pid="gearbox_check"  freq="1HZ" repeat="ON" loop="5s" prority="36" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
+
+		<view name="avm_check" pid="avm_check"  freq="1HZ" repeat="ON" loop="5s" prority="37" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
+		<view name="avm_fault" pid="avm_fault"  freq="1HZ" repeat="ON" loop="5s" prority="38" type="fault" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s">
+			<view name="rear" pid="rear"/>
+			<view name="front" pid="front"/>
+			<view name="right" pid="right"/>
+			<view name="left" pid="left"/>
+			<view name="nowarning" pid="nowarning"/><!-- close all-->
+		</view>
+		<view name="eps_init" pid="eps_init"  freq="1HZ" repeat="ON" loop="5s" prority="39" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+
+		<view name="sport" pid="sport"  freq="1HZ" repeat="OFF" loop="5s" prority="40" type="fault" notifyType="notifyOne" mutex="OFF" audiobind="sport" power="wm1" least="1S" first="5s"/>
+
+		<view name="restplease" pid="restplease" repeat="OFF" loop="5s" prority="41" type="warning" notifyType="notifyOne" mutex="OFF" audiobind="restplease" power="wm1" least="1S" first="5s"/>
+
+		<view name="oillow" pid="oillow" repeat="OFF" loop="5s" prority="42" type="fault" notifyType="notifyOne" mutex="OFF" audiobind="oillow" power="wm1" least="1S" first="5s"/>
+
+		<view name="warmup" pid="warmup"  freq="1HZ" repeat="OFF" loop="5s" prority="46" type="fault" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s">
+			<view name="warming" pid="warming"/>
+			<view name="complete" pid="complete"/>
+			<view name="nowarning" pid="nowarning"/><!-- close all-->
+		</view>
+
+		<view name="dtc_radar" pid="dtc_radar"  freq="1HZ" repeat="ON" loop="5s" prority="47" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+		<view name="dtc_ems" pid="dtc_ems"  freq="1HZ" repeat="ON" loop="5s" prority="48" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+		<view name="dtc_tcu" pid="dtc_tcu"  freq="1HZ" repeat="ON" loop="5s" prority="49" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+		<view name="dtc_abs" pid="dtc_abs"  freq="1HZ" repeat="ON" loop="5s" prority="50" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+		<view name="dtc_eps" pid="dtc_eps"  freq="1HZ" repeat="ON" loop="5s" prority="51" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+		<view name="dtc_bcm" pid="dtc_bcm"  freq="1HZ" repeat="ON" loop="5s" prority="52" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+		<view name="dtc_abm" pid="dtc_abm"  freq="1HZ" repeat="ON" loop="5s" prority="53" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+		<view name="dtc_peps" pid="dtc_peps"  freq="1HZ" repeat="ON" loop="5s" prority="54" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+		<view name="dtc_ac" pid="dtc_ac"  freq="1HZ" repeat="ON" loop="5s" prority="55" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
+		<view name="dtc_ihu" pid="dtc_ihu"  freq="1HZ" repeat="ON" loop="5s" prority="56" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>				
+		<view name="dtc_epb" pid="dtc_epb"  freq="1HZ" repeat="ON" loop="5s" prority="57" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+		<view name="dtc_tpms" pid="dtc_tpms"  freq="1HZ" repeat="ON" loop="5s" prority="58" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+		<view name="dtc_avm" pid="dtc_avm"  freq="1HZ" repeat="ON" loop="5s" prority="59" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>		
+
+		<view name="oilpressurelow" pid="oilpressurelow" repeat="ON" loop="0s" prority="6" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" audiobind="oilpressurelow" least="1S" first="5s"/>
+		<view name="coolandtemperaturehigh" pid="coolandtemperaturehigh" repeat="ON" loop="0s" prority="5" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" audiobind="coolandtemperaturehigh" least="1S" first="5s"/>
+		<view name="WrongGear_Right" pid="WrongGear_Right"  freq="1HZ" repeat="ON" loop="5s" prority="60" type="notice" notifyType="notifyAll" mutex="OFF" power="wm12" audiobind="WrongGear" least="1S" first="5s"/>		
+		<view name="WrongGear_pedal" pid="WrongGear_pedal"  freq="1HZ" repeat="ON" loop="5s" prority="60" type="fault" notifyType="notifyOne" mutex="ON" power="wm1" audiobind="WrongGear" least="1S" first="5s"/>		
+		<view name="WrongGear_P" 	 pid="WrongGear_P"  	freq="1HZ" repeat="ON" loop="5s" prority="60" type="fault" notifyType="notifyOne" mutex="ON" power="wm1" audiobind="WrongGear" least="1S" first="5s"/>
+		<view name="WrongGear_high"  pid="WrongGear_high"  freq="1HZ" repeat="ON" loop="5s" prority="60" type="fault" notifyType="notifyOne" mutex="ON" power="wm1" audiobind="WrongGear" least="1S" first="5s"/>		
+		<view name="WrongGear_DtoM"  pid="WrongGear_DtoM"  	freq="1HZ" repeat="ON" loop="5s" prority="60" type="fault" notifyType="notifyOne" mutex="ON" power="wm1" audiobind="WrongGear" least="1S" first="5s"/>
+		<view name="WrongGear_Unlock"  pid="WrongGear_Unlock"  	freq="1HZ" repeat="ON" loop="5s" prority="60" type="fault" notifyType="notifyOne" mutex="ON" power="wm1" audiobind="WrongGear" least="1S" first="5s"/>
+		<view name="ldw_L"  	pid="ldw_L"  		freq="1HZ" repeat="ON" loop="5s" prority="43" type="fault" notifyType="notifyOne" mutex="ON" power="wm1" audiobind="ldwsound" least="1S" first="5s"/>
+		<view name="ldw_R"  	pid="ldw_R"  		freq="1HZ" repeat="ON" loop="5s" prority="43" type="fault" notifyType="notifyOne" mutex="ON" power="wm1" audiobind="ldwsound" least="1S" first="5s"/>
+	</warningpage>
+</KEY_TYPE>
+
+<KEY_TYPE key="ACC_OFF" showview = "back">
+
+</KEY_TYPE>
+
+<KEY_TYPE key="ACC_ON" showview = "cgi">
+
+</KEY_TYPE>

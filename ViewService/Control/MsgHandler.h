@@ -2,14 +2,13 @@
 #define _MSG_HANDLER_H_
 
 #include <pthread.h>
-#include "savedData.h"
 #include "Thread.h"
-#include "recvDataDefine.h"
 #include "Util.h"
 #include "Singleton.hpp"
 #include "AudioControl.h"
 #include "ViewNode.hpp"
 #include "PriorityQueue.hpp"
+#include "WarnPageControl.hpp"
 
 #define CURR_HMI_STATUS_MATCH_FAIL_MAX_TIMES 10
 
@@ -77,6 +76,7 @@ private:
     AudioControl *m_audioControl;
     XmlManager *m_xmlManager;
     JsonHandler *m_jsonHandler;
+    WarnPageControl *m_warnPageControl;
 
     std::mutex m_mtxCurrWarn;
     ViewNode m_currViewNode; //当前正在显示的告警

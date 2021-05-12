@@ -165,14 +165,15 @@ inline std::string UCharArrToStr(const unsigned char *chArr, const int len)
     return strData;
 }
 
-inline float IEE754_HexToFloat(const unsigned char *ucSrcHex)
+// 41 28 00 00 => 10.5
+inline float IEE754_HexToFloat(const unsigned char *ucSrcHex) // ucSrcHex[0] ucSrcHex[1] ucSrcHex[2] ucSrcHex[3]: 00 00 28 41
 {
     unsigned long ucSrcValue = ucSrcHex[3] << 24 |
                                ucSrcHex[2] << 16 |
                                ucSrcHex[1] << 8 |
                                ucSrcHex[0];
 
-    unsigned int sign = (ucSrcValue & 0x80000000) ? -1 : 1;           //三目运算符
+    int sign = (ucSrcValue & 0x80000000) ? -1 : 1;                    //三目运算符
     unsigned int exponent = ((ucSrcValue >> 23) & 0xff) - 127;        //先右移操作，再按位与计算，出来结果是30到23位对应的e
     float mantissa = 1 + ((float)(ucSrcValue & 0x7fffff) / 0x7fffff); //将22~0转化为10进制，得到对应的x
     return sign * mantissa * pow(2, exponent);
