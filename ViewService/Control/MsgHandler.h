@@ -47,6 +47,7 @@ private:
     void GetSeriousWarnListNode(ViewNode &viewNode);
     void GetFrashWarnListNode(ViewNode &viewNode);
     void GetLoopWarnListNode(ViewNode &viewNode);
+    void GetLoopDoorInfoNode(ViewNode &viewNode);
 
     void GetNextWarnViewNode(ViewNode &viewNode);
 
@@ -71,6 +72,8 @@ private:
     void ResetAtLeastFlag();
     bool IsAtLeastTimeDone();
 
+    std::string GetDoorInfoFlagStr(ViewNode viewNode);
+    
     timer_t m_timerId;
 
     AudioControl *m_audioControl;

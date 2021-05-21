@@ -3,20 +3,22 @@
 #define __DHU_AUDIO_H
 
 #define AUDIO_DEVICE 32
-#define AUDIO_CARD 0
+#define AUDIO_CARD   0
 #define PERIOD_SIZE 1024
 #define PERIOD_COUNT 4
 
-#define WARN_NAME "warning3.wav"
-#define TICK_NAME "tick-441.wav"
-#define TOCK_NAME "tock-441.wav"
+typedef enum {
+    MEDIA_STATE_STOP =0,  //media stop state
+    MEDIA_STATE_PLAYING,  //media playing state
+    MEDIA_STATE_ERR,
+}MediaState;
 
-typedef enum
-{
-   MEDIA_STATE_STOP = 0, //media stop state
-   MEDIA_STATE_PLAYING,  //media playing state
-   MEDIA_STATE_ERR,
-} MediaState;
+typedef enum {
+    SET_PLAYER_LOOP_COUNT    = 0,  //media stop state
+    SET_PLAYER_INTERVAL_TIME ,  //media playing state
+    SET_PLAYER_MAX_PARAM,
+}SetPlayerParam;
+
 
 /**
    * this func is used to start play wav file, only support wav media type.
@@ -38,5 +40,13 @@ MediaState getPlayerState(void);
    * this func is used to stop the player.
 **/
 void stopPlayMedia(void);
+
+/**
+   * this func is used to set the player param.
+   *
+   * @param : set param , for examle ,SET_PLAYER_LOOP_COUNT,SET_PLAYER_INTERVAL_TIME
+   * @value : the value of the param.
+**/
+void setPlayerParam(SetPlayerParam param, int value );
 
 #endif

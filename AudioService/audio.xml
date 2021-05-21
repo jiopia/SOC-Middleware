@@ -4,8 +4,8 @@ name：播放声音的名称，必须唯一。
 chime_id：音源文件名称枚举，参见aplay.h头文件。
 freq：频率，也可以理解为占空比。0HZ/1HZ/2HZ/4HZ/8HZ,其中0HZ代表长鸣。
 priority：优先级。
-power：电源模式，分为IG+/B+。
-loop：循环播放次数，-1代表无限循环。
+power：电源模式，分为wm1/wm2/wm12。
+loop：循环播放次数(秒)，-1代表无限循环。
 playmode：continue/replay。针对loop不为-1的情况下，continue代表低优先级被高优先级打断后，高优先级播放完成之后，继续播放低优先级剩下的次数。replay代表重新播放低优先级loop次数。
 stopmode：delay/immediately。delay代表播放音源后直到一个周期结束，immediately代表播放音源文件后立即停止。
 selfcheck：true/false。自检内是否需要响。
@@ -14,34 +14,14 @@ remark：备注
 ！！！添加声音时候，按照优先级的顺序来添加
 -->
 <audiotype>
-	<!-- ==================================================================================================严重报警======================================================================================================== -->
-	<audio name="pepsnotfinda" 	   	     chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="1" power="IG+" loop="-1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>	
-	<audio name="dooropen" 				 chime_id="CONST_GIP_AUD_6" freq="1HZ" priority="2" power="IG+" loop="-1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>
-	<audio name="sys_fault" 			 chime_id="CONST_GIP_AUD_6" freq="1HZ" priority="3" power="IG+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="整车系统故障"/>
-	<audio name="batt_fault" 			 chime_id="CONST_GIP_AUD_6" freq="1HZ" priority="4" power="IG+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="动力电池故障"/>
-	<audio name="drive_fault" 			 chime_id="CONST_GIP_AUD_6" freq="1HZ" priority="5" power="IG+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="电驱动系统故障"/>
-	<audio name="battdisconnect" 		 chime_id="CONST_GIP_AUD_6" freq="1HZ" priority="6" power="IG+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="动力电池断开"/>
-	<!-- ====================================================================================================报警提示========================================================================================================= -->
-	<audio name="pepsnotcomplete" 	   	 chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="7" power="B+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>	
-	<audio name="pepsnotfindb" 	   	     chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="8" power="B+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>	
-	<audio name="pepsswitchtoNP" 	   	 chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="9" power="IG+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>	
-	<audio name="pepsstepbreak" 	   	 chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="10" power="B+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>	
-	<audio name="pepsswitchtoPStart" 	 chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="11" power="B+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>	
-	<audio name="pepsincar" 	   	     chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="12" power="B+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>	
-	<audio name="pepspoweroff" 	   	     chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="13" power="B+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>	
-	<audio name="pepsnotfindc" 	   	     chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="14" power="B+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>	
-	<audio name="pepsbatterylow" 	   	 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="15" power="B+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>
-	<audio name="overspeed" 			 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="16" power="IG+" loop="3" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>
-	<audio name="phone" 	   	         chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="26" power="B+" loop="6" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>
-	<audio name="drive_belt"   			 chime_id="CONST_GIP_AUD_7" freq="1HZ" priority="28" power="IG+" loop="100" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="主驾驶员安全带未系"/>
-	<audio name="copilot_belt"  		 chime_id="CONST_GIP_AUD_7" freq="1HZ" priority="29" power="IG+" loop="100" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="副驾驶安全带未系"/>
-	<audio name="ldw_3" 			 	 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="33" power="IG+" loop="3" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="车道偏离3声"/>	
-	<audio name="ldwsound" 			 	 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="38" power="IG+" loop="-1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="车道偏离"/>
-	<audio name="restplease" 			 chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="40" power="IG+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>
-	<audio name="parking" 			 	 chime_id="CONST_GIP_AUD_6" freq="1HZ" priority="41" power="B+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="小灯未关报警"/>
-	<audio name="keyreminder"            chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="42" power="B+" loop="-1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="keyreminder"/>
-	<audio name="soclow" 			 	 chime_id="CONST_GIP_AUD_6" freq="1HZ" priority="43" power="IG+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="低荷电状态"/>
-	<audio name="turn_on" 				 chime_id="CONST_GIP_AUD_5_1" freq="1HZ" priority="44" power="B+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="信号对应着ON"/>
-	<audio name="turn_off" 				 chime_id="CONST_GIP_AUD_5_2" freq="1HZ" priority="44" power="B+" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="信号对应着OFF"/>
+	<!-- =====================================================================================================报警=========================================================================================================== -->
+	<audio name="dooropen"					chime_id="warning.wav" freq="1HZ" priority="7" power="wm1" loop="-1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="门开报警"/>
+	<audio name="drive_belt"				chime_id="warning.wav" freq="1HZ" priority="8" power="wm1" loop="120" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="安全带未系提示音三级报警"/>
+	<audio name="copilot_belt"				chime_id="warning.wav" freq="1HZ" priority="9" power="wm1" loop="120" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="安全带未系提示音二级报警"/>
+	<audio name="overspeed"					chime_id="warning.wav" freq="1HZ" priority="10" power="wm1" loop="3" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="超速报警"/>
+	<audio name="coolandtemperaturehigh"	chime_id="warning.wav" freq="1HZ" priority="11" power="wm1" loop="-1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="水温高报警"/>
+	<audio name="tirewarning" 			 	chime_id="warning.wav" freq="1HZ" priority="12" power="wm1" loop="-1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="胎压系统报警"/>
+	<audio name="turn_on" 				 	chime_id="tick.wav" freq="1HZ" priority="13" power="wm1" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="左右转向灯ON"/>
+	<audio name="turn_off" 				 	chime_id="tock.wav" freq="1HZ" priority="13" power="wm1" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="左右转向灯OFF"/>
 	<!-- ===================================================================================================================================================================================================================== -->
 </audiotype>

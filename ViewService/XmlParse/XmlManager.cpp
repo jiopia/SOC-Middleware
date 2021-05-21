@@ -35,33 +35,45 @@ void XmlManager::XmlParse(const std::string &filename)
     TiXmlElement *rootElement = xmlDoc.RootElement();
 
     TiXmlElement *pEle = rootElement;
-    for (TiXmlElement *stuElement = pEle->FirstChildElement();
-         stuElement != NULL;
-         stuElement = stuElement->NextSiblingElement())
+    for (TiXmlElement *fatherElement = pEle->FirstChildElement();
+         fatherElement != NULL;
+         fatherElement = fatherElement->NextSiblingElement())
     {
-        TiXmlAttribute *pAttr = stuElement->FirstAttribute();
+        TiXmlAttribute *pFatherAttr = fatherElement->FirstAttribute(); //主属性
 
-        while (NULL != pAttr)
+        ViewInfoPtr fatherViewInfo = std::make_shared<ViewInfo>(); //父节点
+        while (NULL != pFatherAttr)
         {
-            pAttr = pAttr->Next();
+            XmlAttrParse(fatherViewInfo, pFatherAttr); //解析父节点
+            pFatherAttr = pFatherAttr->Next();
         }
 
-        for (TiXmlElement *sonElement = stuElement->FirstChildElement();
+        std::vector<ViewInfo> childViews;
+        for (TiXmlElement *sonElement = fatherElement->FirstChildElement();
              sonElement != NULL;
              sonElement = sonElement->NextSiblingElement())
         {
-            TiXmlAttribute *pChildAttr = sonElement->FirstAttribute();
+            TiXmlAttribute *pSonAttr = sonElement->FirstAttribute(); //子属性
 
-            ViewInfoPtr viewInfo = std::make_shared<ViewInfo>();
-            while (NULL != pChildAttr)
+            ViewInfoPtr sonViewInfo = std::make_shared<ViewInfo>(); //子节点
+            while (NULL != pSonAttr)
             {
-                XmlAttrParse(viewInfo, pChildAttr);
-                pChildAttr = pChildAttr->Next();
+                XmlAttrParse(sonViewInfo, pSonAttr); //解析子节点
+                pSonAttr = pSonAttr->Next();
             }
-            if (!viewInfo->GetName().empty() && !viewInfo->GetExtraInfo().empty())
+
+            if (!sonViewInfo->GetName().empty() && !sonViewInfo->GetExtraInfo().empty())
             {
-                m_configInfoMap.insert(std::make_pair((viewInfo->GetName() + viewInfo->GetExtraInfo()), viewInfo));
+                // DebugPrint("Son View Name:[%s], Son View ExtraInfo:[%s]\n", sonViewInfo->GetName().c_str(), sonViewInfo->GetExtraInfo().c_str());
+                //此处应该将子节点信息插入到父节点的ViewInfo中去
+                fatherViewInfo->PushChildViewName(sonViewInfo->GetName());
             }
+        }
+
+        if (!fatherViewInfo->GetName().empty() && !fatherViewInfo->GetExtraInfo().empty())
+        {
+            // InfoPrint("Father View Name:[%s], Father View ExtraInfo:[%s]\n", fatherViewInfo->GetName().c_str(), fatherViewInfo->GetExtraInfo().c_str());
+            m_configInfoMap.insert(std::make_pair(fatherViewInfo->GetName(), fatherViewInfo));
         }
     }
 }

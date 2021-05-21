@@ -1,4 +1,4 @@
-TARGET = CoreProcessor
+TARGET = AudioService
 
 CROSS_CHAIN = aarch64-linux-gnu-
 
@@ -32,10 +32,9 @@ SRC_PATH = \
 	$(COMMON_SRC_PATH)
 
 INCLUDE_FLAG = \
-	-I$(PROJECT_ROOT)/../common/bdsdk/include \
 	-I$(PROJECT_ROOT)/../common/Utils \
 	-I$(PROJECT_ROOT)/../common/Utils/cJSON \
-	-I$(PROJECT_ROOT)/../common/Utils/JsonHandler  \
+	-I$(PROJECT_ROOT)/../common/Utils/JsonHandler \
 	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection \
 	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Connection/Mqtt \
 	-I$(PROJECT_ROOT)/../common/Utils/MultiConnection/Forwarder \
@@ -43,22 +42,22 @@ INCLUDE_FLAG = \
 	-I$(PROJECT_ROOT)/../common/Utils/Thread \
 	-I$(PROJECT_ROOT)/../common/Utils/TinyXML \
 	-I$(PROJECT_ROOT)/../third_party/include \
-	-I$(PROJECT_ROOT)/CoreMsgHandler
-
-PLUG_FLAG = -D E02
+	-I$(PROJECT_ROOT)/playControl \
+	-I$(PROJECT_ROOT)/sound \
+	-I$(PROJECT_ROOT)/xmlDoc
 
 LIB_FLAG = \
 	-L$(PROJECT_ROOT)/../third_party/lib/aarch64
 	#-L$(PROJECT_ROOT)/../third_party/lib/aarch64/x86_64
 
 LIB_FLAGS =
-LIBXX_FLAGS = -lECP -lpthread -lmosquitto -lAudio -lpowerct
+LIBXX_FLAGS = -lAudio -lrt -lpthread -lmosquitto #-l:libmosquitto.a
 
 C_FLAGS = 
-CXX_FLAGS = -std=c++14 -g
+CXX_FLAGS = -std=c++11
 
 all:
-	$(CXX) $(PLUG_FLAG) $(INCLUDE_FLAG) $(SRC_PATH) $(LIB_FLAG) $(LIBXX_FLAGS) $(CXX_FLAGS) -o $(TARGET)
+	$(CXX) $(SRC_PATH) $(INCLUDE_FLAG) $(LIB_FLAG) $(LIBXX_FLAGS) $(CXX_FLAGS) -o $(TARGET)
 	$(STRIP) $(TARGET)
 
 .PHONY:clean

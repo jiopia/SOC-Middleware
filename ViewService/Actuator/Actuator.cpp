@@ -46,10 +46,10 @@ void Actuator::MsgReciever()
 {
     while (1)
     {
-        std::string strMsg = Forwarder::GetInstance()->MsgPop();
-        if (!strMsg.empty())
+        MsgData msgData = Forwarder::GetInstance()->MsgPop();
+        if (!msgData.Empty())
         {
-            MsgProcessor(strMsg);
+            MsgProcessor(msgData.strMsg);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
@@ -74,6 +74,14 @@ void Actuator::MsgSend(std::string strTopic, std::string strMsg)
     if (this->m_mqttClient->m_isConnected)
     {
         this->m_mqttClient->MsgSend(strTopic, strMsg);
+    }
+}
+
+void Actuator::SendAudioWarnInfo(std::string strDataSend)
+{
+    if (m_mqttClient->m_isConnected)
+    {
+        m_mqttClient->MsgSend(std::string(MQTT_TOPIC_WARN_AUDIO), strDataSend);
     }
 }
 

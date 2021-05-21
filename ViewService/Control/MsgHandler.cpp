@@ -43,8 +43,7 @@ MsgHandler::~MsgHandler()
  */
 void MsgHandler::SetWarnView(std::string strViewName, std::string strExtraInfo, VIEW_STATUS viewStatus)
 {
-    std::string strKeyName = strViewName + strExtraInfo;
-    ViewInfoPtr viewInfo = m_xmlManager->GetViewInfo(strKeyName);
+    ViewInfoPtr viewInfo = m_xmlManager->GetViewInfo(strViewName);
     if (viewInfo == NULL)
     {
         ErrPrint("Can NOT find ViewInfo which viewname is [%s]!\n", strViewName.c_str());
@@ -82,6 +81,24 @@ void MsgHandler::RemoveCurrentWarn()
         {
             WarnPrint("WarnView:[%s] Need Push Loop List.\n", tempViewNode.strViewName.c_str());
             m_loopViewList.emplace_back(tempViewNode);
+        }
+
+        InfoPrint("m_loopViewList Size:[%d]\r\n", (int)m_loopViewList.size());
+        for (auto iter : m_loopViewList)
+        {
+            ViewNode warnNode = iter;
+            InfoPrint("LoopWarnList -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\r\n",
+                      warnNode.strViewName.c_str(),
+                      warnNode.strExtraInfo.c_str(),
+                      warnNode.viewStatus == VIEW_ON ? "ON" : "OFF");
+
+            for (auto iterExtraInfo : warnNode.extraInfos)
+            {
+                ViewExtraInfo extraInfo = iterExtraInfo;
+                InfoPrint("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\r\n",
+                          extraInfo.strExtraInfo.c_str(),
+                          extraInfo.viewStatus == VIEW_ON ? "ON" : "OFF");
+            }
         }
     }
 }
@@ -121,14 +138,28 @@ void MsgHandler::HandleWarnViews()
     }
 
     std::shared_ptr<ViewInfo> pNextViewInfo = m_xmlManager->GetViewInfo(nextWarnViewNode.GetKeyName());
-    if (pNextViewInfo == NULL ||
-        m_currViewNode == nextWarnViewNode)
+    if (pNextViewInfo == NULL || m_currViewNode == nextWarnViewNode)
     {
         if (pNextViewInfo == NULL)
         {
             EraseWarnViewNode(nextWarnViewNode);
         }
-        return;
+
+        if (m_currViewNode == nextWarnViewNode)
+        {
+            if (m_currViewNode.strViewName != "doorwarn" && m_currViewNode.strViewName != "doorinfo")
+            {
+                if (m_currViewNode.viewStatus == nextWarnViewNode.viewStatus)
+                {
+                    return;
+                }
+            }
+            else if ((m_currViewNode.viewStatus == nextWarnViewNode.viewStatus) &&
+                     (GetDoorInfoFlagStr(m_currViewNode) == GetDoorInfoFlagStr(nextWarnViewNode)))
+            {
+                return;
+            }
+        }
     }
 
     ViewNode viewNeedExected;
@@ -136,11 +167,6 @@ void MsgHandler::HandleWarnViews()
     {
     case VIEW_OFF:
     {
-        // DebugPrint("---------> Debug 0\n");
-        // if (m_currViewNode.Empty() ||
-        //     (nextWarnViewNode.strViewName == m_currViewNode.strViewName &&
-        //      nextWarnViewNode.strExtraInfo == m_currViewNode.strExtraInfo))
-        // {
         DebugPrint("---------> Debug 1\n");
         EraseWarnViewNode(nextWarnViewNode);
         viewNeedExected = nextWarnViewNode;
@@ -148,7 +174,6 @@ void MsgHandler::HandleWarnViews()
 
         std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
         m_currViewNode.SetEmpty();
-        // }
     }
     break;
     case VIEW_ON:
@@ -164,24 +189,6 @@ void MsgHandler::HandleWarnViews()
 
         std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
         m_currViewNode = nextWarnViewNode;
-        /*
-        报警逻辑：
-            1、严重报警：seriousList列表内，优先执行；
-            2、新报警：freshList列表内，次优先执行；
-            3、轮询报警：loopList列表内，新报警列表内执行过的报警，在经过判断，符合轮询报警的要求之后，转入loopList列表内；
-            [A, loop(0), repeat(ON),  pri(1) ]          A, 严重报警, 优先级1
-            [B, loop(5), repeat(OFF), pri(30)]          B, 首轮报警，优先级30
-            [C, loop(5), repeat(ON),  pri(20)]          C, 轮询报警，优先级20
-            [D, loop(5), repeat(ON),  pri(19)]          D, 轮询报警，优先级19
-
-            情景：
-                A   -> seriousList.emplace_back(A)
-                    -> Handle[ (1)curr:Empty, next:A;  ]
-
-        慎重考虑一下几种情况：
-            1、进入轮询之后（每个报警3s的轮询时间），有新的报警来临时，保持最短显示时间（1.5s），然后显示新的报警；
-            2、
-        */
     }
     break;
     default:
@@ -237,30 +244,6 @@ void MsgHandler::Notify(ViewNode &viewNode)
     {
         Actuator::GetInstance()->MsgSend(std::string(MQTT_TOPIC_WARN_MW_TO_HMI), strMsgSend);
     }
-
-#if 0
-    char *warnData = m_jsonHandler->GetWarnJsonInfo(m_currViewNode.strViewName,
-                                                    m_currViewNode.strExtraInfo,
-                                                    m_currViewNode.GetViewStatusStr(m_currViewNode.viewStatus));
-
-    if (viewNode.viewStatus == VIEW_ON)
-    {
-        std::string strMsgSend = "0401010100";
-        Actuator::GetInstance()->MsgSend(std::string(MQTT_TOPIC_WARN_MW_TO_HMI), strMsgSend);
-    }
-    else
-    {
-        std::string strMsgSend = "0401010000";
-        Actuator::GetInstance()->MsgSend(std::string(MQTT_TOPIC_WARN_MW_TO_HMI), strMsgSend);
-    }
-
-    if (warnData != NULL)
-    {
-        CriticalPrint("MsgSend:[%s]\r\n", warnData);
-    }
-
-    BDSTAR_FREE(warnData);
-#endif
 }
 
 /** 
@@ -303,6 +286,14 @@ void MsgHandler::UpdateWarnViewNode(ViewNode viewNode)
                       warnNode.strViewName.c_str(),
                       warnNode.strExtraInfo.c_str(),
                       warnNode.viewStatus == VIEW_ON ? "ON" : "OFF");
+
+            for (auto iterExtraInfo : warnNode.extraInfos)
+            {
+                ViewExtraInfo extraInfo = iterExtraInfo;
+                InfoPrint("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\r\n",
+                          extraInfo.strExtraInfo.c_str(),
+                          extraInfo.viewStatus == VIEW_ON ? "ON" : "OFF");
+            }
         }
 
         InfoPrint("m_freshViewList Size:[%d]\r\n", (int)m_freshViewList.size());
@@ -313,6 +304,14 @@ void MsgHandler::UpdateWarnViewNode(ViewNode viewNode)
                       warnNode.strViewName.c_str(),
                       warnNode.strExtraInfo.c_str(),
                       warnNode.viewStatus == VIEW_ON ? "ON" : "OFF");
+
+            for (auto iterExtraInfo : warnNode.extraInfos)
+            {
+                ViewExtraInfo extraInfo = iterExtraInfo;
+                InfoPrint("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\r\n",
+                          extraInfo.strExtraInfo.c_str(),
+                          extraInfo.viewStatus == VIEW_ON ? "ON" : "OFF");
+            }
         }
 
         InfoPrint("m_loopViewList Size:[%d]\r\n", (int)m_loopViewList.size());
@@ -323,6 +322,14 @@ void MsgHandler::UpdateWarnViewNode(ViewNode viewNode)
                       warnNode.strViewName.c_str(),
                       warnNode.strExtraInfo.c_str(),
                       warnNode.viewStatus == VIEW_ON ? "ON" : "OFF");
+
+            for (auto iterExtraInfo : warnNode.extraInfos)
+            {
+                ViewExtraInfo extraInfo = iterExtraInfo;
+                InfoPrint("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\r\n",
+                          extraInfo.strExtraInfo.c_str(),
+                          extraInfo.viewStatus == VIEW_ON ? "ON" : "OFF");
+            }
         }
 
         InfoPrint("CurrentWarn -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\r\n",
@@ -338,25 +345,64 @@ void MsgHandler::UpdateWarnViewNode(ViewNode viewNode)
  */
 void MsgHandler::UpdateSeriousWarnList(ViewNode viewNode)
 {
-    bool isAlreadyExist = false;
     {
+        bool isAlreadyExist = false;
+        ViewNode *tempNode = NULL;
         std::lock_guard<std::mutex> lockGuard(m_mtxSerious);
         for (auto iter = m_seriousViewList.begin(); iter != m_seriousViewList.end(); iter++)
         {
-            ViewNode *tempNode = &(*iter);
-            if (tempNode->strViewName == viewNode.strViewName &&
-                tempNode->strExtraInfo == viewNode.strExtraInfo)
+            tempNode = &(*iter);
+            if (tempNode->strViewName == viewNode.strViewName)
             {
-                tempNode->viewStatus = viewNode.viewStatus;
                 isAlreadyExist = true;
+                break;
             }
         }
 
-        if (!isAlreadyExist)
+        /* 已经存在的报警信息(更新) */
+        if (isAlreadyExist && tempNode != NULL)
         {
-            m_seriousViewList.emplace_back(viewNode);
-            std::sort(m_seriousViewList.begin(), m_seriousViewList.end(), ViewListSortFunction);
+            if (tempNode->strViewName != "doorwarn")
+            {
+                tempNode->viewStatus = viewNode.viewStatus;
+            }
+            else
+            {
+                bool isExtraInfoExist = false;
+                for (auto iter = tempNode->extraInfos.begin(); iter != tempNode->extraInfos.end(); iter++)
+                {
+                    ViewExtraInfo *tempExtraInfo = &(*iter);
+                    if (tempExtraInfo->strExtraInfo == viewNode.strExtraInfo)
+                    {
+                        isExtraInfoExist = true;
+                        tempExtraInfo->viewStatus = viewNode.viewStatus;
+                        break;
+                    }
+                }
+
+                if (!isExtraInfoExist)
+                {
+                    ViewExtraInfo viewExtraInfo(viewNode.strExtraInfo, viewNode.viewStatus);
+                    tempNode->extraInfos.emplace_back(viewExtraInfo);
+                }
+
+                tempNode->UpdateViewStatus();
+            }
         }
+        else /* 新报警信息(插入) */
+        {
+            if (viewNode.strViewName == "doorwarn")
+            {
+                ViewExtraInfo viewExtraInfo(viewNode.strExtraInfo, viewNode.viewStatus);
+                viewNode.strExtraInfo = viewNode.strViewName;
+                viewNode.extraInfos.emplace_back(viewExtraInfo);
+                viewNode.UpdateViewStatus();
+            }
+
+            m_seriousViewList.emplace_back(viewNode);
+        }
+
+        std::sort(m_seriousViewList.begin(), m_seriousViewList.end(), ViewListSortFunction);
     }
 
     {
@@ -371,93 +417,104 @@ void MsgHandler::UpdateSeriousWarnList(ViewNode viewNode)
  */
 void MsgHandler::UpdateFrashWarnList(ViewNode viewNode)
 {
-#if 0
-    if (viewNode.viewStatus == VIEW_OFF)
+    if (viewNode.strViewName == "doorinfo")
     {
-        /* 在loop列表里的ON报警，此时有此类OFF报警插入，则会插入进fresh列表，因此需要同步删除loop内报警 */
-        ViewNode tmpNode(viewNode.strViewName, viewNode.strExtraInfo, VIEW_ON);
+        ViewNode tmpWarnOnNode(viewNode.strViewName, viewNode.strViewName, viewNode.viewStatus);
+        if (IsNodeExistInLoopList(tmpWarnOnNode))
         {
-            std::lock_guard<std::mutex> lockGuard(m_mtxLoop);
-            auto iterFindLoop = find(m_loopViewList.begin(), m_loopViewList.end(), tmpNode);
-            if (iterFindLoop != m_loopViewList.end())
-            {
-                m_loopViewList.erase(iterFindLoop);
-            }
-        }
+            ViewNode loopDoorInfoNode;
+            GetLoopDoorInfoNode(loopDoorInfoNode);
+            EraseLoopWarnListNode(tmpWarnOnNode);
 
-        {
-            std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
-            auto iterFindFresh if (find(m_freshViewList.begin(), m_freshViewList.end(), viewNode));
-            if (iterFindFresh == m_freshViewList.end())
+            bool isExtraInfoExist = false;
+            for (auto iter = loopDoorInfoNode.extraInfos.begin(); iter != loopDoorInfoNode.extraInfos.end(); iter++)
             {
-                m_freshViewList.emplace_back(viewNode);
-            }
-        }
-    }
-    else //VIEW_ON
-    {
-        bool isAlreadyExist = false;
-
-        {
-            std::lock_guard<std::mutex> lockGuard(m_mtxLoop);
-            auto iterFindLoop = find(m_loopViewList.begin(), m_loopViewList.end(), viewNode);
-            if (iterFindLoop == m_loopViewList.end())
-            {
-                /* 在loop列表里的ON报警，此时再次插入，则不必再插入fresh列表 */
-                std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
-                for (auto iter = m_freshViewList.begin(); iter != m_freshViewList.end(); iter++)
+                ViewExtraInfo *tempExtraInfo = &(*iter);
+                if (tempExtraInfo->strExtraInfo == viewNode.strExtraInfo)
                 {
-                    ViewNode *tempNode = &(*iter);
-                    if (tempNode->strViewName == viewNode.strViewName &&
-                        tempNode->strExtraInfo == viewNode.strExtraInfo)
+                    isExtraInfoExist = true;
+                    tempExtraInfo->viewStatus = viewNode.viewStatus;
+                    break;
+                }
+            }
+
+            if (!isExtraInfoExist)
+            {
+                ViewExtraInfo viewExtraInfo(viewNode.strExtraInfo, viewNode.viewStatus);
+                loopDoorInfoNode.extraInfos.emplace_back(viewExtraInfo);
+            }
+
+            loopDoorInfoNode.UpdateViewStatus();
+
+            std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
+            m_freshViewList.emplace_back(loopDoorInfoNode);
+            return;
+        }
+        else if (IsNodeExistInFreshList(tmpWarnOnNode))
+        {
+            ViewNode *tempNode = NULL;
+            std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
+            for (auto iter = m_freshViewList.begin(); iter != m_freshViewList.end(); iter++)
+            {
+                tempNode = &(*iter);
+                if (tempNode->strViewName == viewNode.strViewName)
+                {
+                    bool isExtraInfoExist = false;
+                    for (auto iter = tempNode->extraInfos.begin(); iter != tempNode->extraInfos.end(); iter++)
                     {
-                        tempNode->viewStatus = viewNode.viewStatus;
-                        isAlreadyExist = true;
+                        ViewExtraInfo *tempExtraInfo = &(*iter);
+                        if (tempExtraInfo->strExtraInfo == viewNode.strExtraInfo)
+                        {
+                            isExtraInfoExist = true;
+                            tempExtraInfo->viewStatus = viewNode.viewStatus;
+                            break;
+                        }
                     }
+
+                    if (!isExtraInfoExist)
+                    {
+                        ViewExtraInfo viewExtraInfo(viewNode.strExtraInfo, viewNode.viewStatus);
+                        tempNode->extraInfos.emplace_back(viewExtraInfo);
+                    }
+
+                    tempNode->UpdateViewStatus();
+                    break;
                 }
             }
         }
+        else
+        {
+            ViewExtraInfo viewExtraInfo(viewNode.strExtraInfo, viewNode.viewStatus);
+            viewNode.strExtraInfo = viewNode.strViewName;
+            viewNode.extraInfos.emplace_back(viewExtraInfo);
+            viewNode.UpdateViewStatus();
 
-        {
-            if (!isAlreadyExist)
-            {
-                m_freshViewList.emplace_back(viewNode);
-            }
-        }
-    }
-#endif
-    if (viewNode.viewStatus == VIEW_OFF)
-    {
-        ViewNode tmpWarnOnNode(viewNode.strViewName, viewNode.strExtraInfo, VIEW_ON);
-        if (IsNodeExistInLoopList(tmpWarnOnNode))
-        {
-            EraseLoopWarnListNode(tmpWarnOnNode);
-        }
-
-        bool isAlreadyExist = false;
-        std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
-        for (auto iter = m_freshViewList.begin(); iter != m_freshViewList.end(); iter++)
-        {
-            ViewNode *tmpNode = &(*iter);
-            if (tmpNode->strViewName == viewNode.strViewName &&
-                tmpNode->strExtraInfo == viewNode.strExtraInfo)
-            {
-                tmpNode->viewStatus = viewNode.viewStatus;
-                isAlreadyExist = true;
-                break;
-            }
-        }
-
-        if (!isAlreadyExist)
-        {
+            std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
             m_freshViewList.emplace_back(viewNode);
         }
     }
     else
     {
-        if (IsNodeExistInLoopList(viewNode) || IsNodeExistInFreshList(viewNode))
+        if (IsNodeExistInLoopList(viewNode))
         {
-            return;
+            EraseLoopWarnListNode(viewNode);
+
+            std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
+            m_freshViewList.emplace_back(viewNode);
+        }
+        else if (IsNodeExistInFreshList(viewNode))
+        {
+            ViewNode *tempNode = NULL;
+            std::lock_guard<std::mutex> lockGuard(m_mtxFresh);
+            for (auto iter = m_freshViewList.begin(); iter != m_freshViewList.end(); iter++)
+            {
+                tempNode = &(*iter);
+                if (tempNode->strViewName == viewNode.strViewName)
+                {
+                    tempNode->viewStatus = viewNode.viewStatus;
+                    break;
+                }
+            }
         }
         else
         {
@@ -503,6 +560,20 @@ void MsgHandler::GetLoopWarnListNode(ViewNode &viewNode)
     }
 }
 
+void MsgHandler::GetLoopDoorInfoNode(ViewNode &viewNode)
+{
+    std::lock_guard<std::mutex> lockGuard(m_mtxLoop);
+    for (auto iter : m_loopViewList)
+    {
+        ViewNode warnNode = iter;
+        if (warnNode.strViewName == "doorinfo")
+        {
+            viewNode = warnNode;
+            break;
+        }
+    }
+}
+
 /** 
  * @brief   依次从严重告警队列(优先)、待显示队列(次优先)、轮询队列(当待显示队列为空时)获取下一个告警信息
  * 
@@ -526,13 +597,11 @@ void MsgHandler::GetNextWarnViewNode(ViewNode &viewNode)
     {
         /* 2、尚未被执行过的报警 */
         GetFrashWarnListNode(viewNode);
-        // EraseFreshWarnListNode(viewNode);
     }
     else if (!m_loopViewList.empty())
     {
         /* 3、执行过的需要轮训的报警 */
         GetLoopWarnListNode(viewNode);
-        // EraseFreshWarnListNode(viewNode);
     }
 }
 
@@ -836,4 +905,43 @@ bool MsgHandler::IsAtLeastTimeDone()
 {
     std::lock_guard<std::mutex> lockGuard(g_mtxTimeDone);
     return g_isAtLeastTimeDone;
+}
+
+std::string MsgHandler::GetDoorInfoFlagStr(ViewNode viewNode)
+{
+    std::string strDoorFlags = "000000";
+    std::string strFlag;
+
+    for (auto iter = viewNode.extraInfos.begin(); iter != viewNode.extraInfos.end(); iter++)
+    {
+        ViewExtraInfo *tempExtraInfo = &(*iter);
+        strFlag = (tempExtraInfo->viewStatus == VIEW_ON) ? "1" : "0";
+
+        if (tempExtraInfo->strExtraInfo == "DRIVER_DOOR")
+        {
+            strDoorFlags = strFlag + strDoorFlags.substr(1);
+        }
+        else if (tempExtraInfo->strExtraInfo == "PASSENGER_DOOR")
+        {
+            strDoorFlags = strDoorFlags.substr(0, 1) + strFlag + strDoorFlags.substr(2);
+        }
+        else if (tempExtraInfo->strExtraInfo == "REAR_RIGHT_DOOR")
+        {
+            strDoorFlags = strDoorFlags.substr(0, 2) + strFlag + strDoorFlags.substr(3);
+        }
+        else if (tempExtraInfo->strExtraInfo == "REAR_LEFT_DOOR")
+        {
+            strDoorFlags = strDoorFlags.substr(0, 3) + strFlag + strDoorFlags.substr(4);
+        }
+        else if (tempExtraInfo->strExtraInfo == "HOOD")
+        {
+            strDoorFlags = strDoorFlags.substr(0, 4) + strFlag + strDoorFlags.substr(5);
+        }
+        else if (tempExtraInfo->strExtraInfo == "BACK_DOOR")
+        {
+            strDoorFlags = strDoorFlags.substr(0, 5) + strFlag;
+        }
+    }
+
+    return strDoorFlags;
 }

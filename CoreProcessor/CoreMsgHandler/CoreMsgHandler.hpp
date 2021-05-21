@@ -11,15 +11,17 @@
 #include "JsonHandler.h"
 
 #include "MsgDataDefine.h"
-#include "ActionData.h"
 #include "DataToHMIDefine.h"
 
 #ifdef E02
 
+extern "C"
+{
+#include "powerct.h"
+}
+
 #include <sys/time.h>
 #include <algorithm>
-#include <string>
-#include <unistd.h>
 #include <utility>
 #include "ECPComm.h"
 #include "ECPInterface.h"
@@ -32,6 +34,9 @@ typedef union
     uint8_t uint8Val[CHANGE_INT_NUMS * sizeof(int32Val)];
 } typeInt2Chars;
 
+int acquire_event(void);
+int release_event(void);
+
 #endif //!E02
 
 class CoreMsgHandler : public Singleton<CoreMsgHandler>, public Thread
@@ -42,12 +47,14 @@ public:
 
     void E02_MsgReciever(ECPVehicleValue rData);
 
+    void E02_Request(ECPVehicleValue requestValue);
+
 private:
     void Run();
 
     void MsgReciever();
 
-    void MsgProcessor(std::string strMsg);
+    void MqttMsgProcessor(MsgData msgData);
 
     void ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
@@ -63,20 +70,22 @@ private:
 
     void EOLMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
-    // void AudioPlay(std::string audioFileName);
+    std::shared_ptr<BaseConnection> m_connClient = NULL;
+
+    ECPInterface *ptrECP = NULL;
 
     JsonHandler *m_jsonHandler = NULL;
-
-    std::shared_ptr<BaseConnection> m_connClient = NULL;
-    ECPInterface *ptrECP = NULL;
 
     VehicleWorkData_t m_vehicleWorkData_t;
 
     VehicleAccStatus m_vehicleStatus = VEHICLE_DEFAULT;
 
-protected:
+private:
     void SendViewPageInfo(std::string strViewName, std::string strExtraInfo, std::string strStatus);
     void SendAudioWarnInfo(std::string strAudioName, std::string strStatus);
+    void SendFaultInfo();
+
+    void ExecPowerEvent(VehicleAccStatus accStatus);
 };
 
 #endif //!_CORE_MSG_HANDLER_H_

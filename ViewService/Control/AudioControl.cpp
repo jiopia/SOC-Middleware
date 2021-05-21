@@ -14,4 +14,5 @@ void AudioControl::SendAudio(std::string strWarn, std::string strAudioInfo, std:
     std::string strDataSend = m_jsonHandler->GetWarnSendData(strWarn, strAudioInfo, strViewStatus);
 
     InfoPrint("AudioControl SendAudio:[%s]\r\n", strDataSend.c_str());
+    Actuator::GetInstance()->SendAudioWarnInfo(strDataSend);
 }

@@ -136,6 +136,9 @@ void MqttConnection::on_message_callback(struct mosquitto *mosq, void *obj, cons
 {
     InfoPrint("FROM topic:[%s], GOT message:[%s]", msg->topic, (const char *)msg->payload);
 
-    std::string strWarnMsg = (const char *)msg->payload;
-    Forwarder::GetInstance()->MsgPush(strWarnMsg);
+    std::string strTopic = msg->topic;
+    std::string strMsg = (const char *)msg->payload;
+
+    MsgData msgData(strTopic, strMsg);
+    Forwarder::GetInstance()->MsgPush(msgData);
 }

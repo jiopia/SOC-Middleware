@@ -1,175 +1,49 @@
-<KEY_TYPE name="ACC" key="ACC" showview="cgi" pid="acc_cgi">
-	<!-- M01-EV V1.1 报警信息 -->
-	<warningpage name="warningpage" pid="warningpage">
-		<!-- ============================================================================================严重报警================================================================================================== -->
-		<!-- PEPS2.2 未检测到智能钥匙 -->
-		<view name="pepsnotfinda" pid="pepsnotfinda" freq="1HZ" repeat="ON" loop="0s" prority="1" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="pepsnotfinda" least="1S" first="5s"/>
-		<!-- 门开报警(VehicleSpeed>=3km/h) 前左门 -->
-		<view name="doorwarn" pid="DRIVER_DOOR" freq="1HZ" repeat="ON" loop="0s" prority="2" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s"/>
-		<!-- 门开报警(VehicleSpeed>=3km/h) 前右门 -->
-		<view name="doorwarn" pid="PASSENGER_DOOR" freq="1HZ" repeat="ON" loop="0s" prority="2" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s"/>
-		<!-- 门开报警(VehicleSpeed>=3km/h) 后右门 -->
-		<view name="doorwarn" pid="REAR_RIGHT_DOOR" freq="1HZ" repeat="ON" loop="0s" prority="2" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s"/>
-		<!-- 门开报警(VehicleSpeed>=3km/h) 后左门 -->
-		<view name="doorwarn" pid="REAR_LEFT_DOOR" freq="1HZ" repeat="ON" loop="0s" prority="2" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s"/>
-		<!-- 门开报警(VehicleSpeed>=3km/h) 引擎盖 -->
-		<view name="doorwarn" pid="HOOD" freq="1HZ" repeat="ON" loop="0s" prority="2" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s"/>
-		<!-- 门开报警(VehicleSpeed>=3km/h) 后备箱 -->
-		<view name="doorwarn" pid="BACK_DOOR" freq="1HZ" repeat="ON" loop="0s" prority="2" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s"/>
-		<!-- 门开报警(VehicleSpeed>=3km/h) 解除所有报警 -->
-		<view name="doorwarn" pid="nowarning" freq="1HZ" repeat="ON" loop="0s" prority="2" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s"/>
-		<!-- 整车系统故障 -->
-		<view name="sys_fault" pid="sys_fault" freq="1HZ" repeat="ON" loop="0s" prority="3" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="sys_fault" least="1S" first="5s"/>
-		<!-- 动力电池故障 -->
-		<view name="batt_fault" pid="batt_fault" freq="1HZ" repeat="ON" loop="0s" prority="4" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="batt_fault" least="1S" first="5s"/>
-		<!-- 电驱动系统故障 -->
-		<view name="drive_fault" pid="drive_fault" freq="1HZ" repeat="ON" loop="0s" prority="5" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="drive_fault" least="1S" first="5s"/>
-		<!-- 动力电池断开 -->
-		<view name="battdisconnect" pid="battdisconnect" freq="1HZ" repeat="ON" loop="0s" prority="6" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="battdisconnect" least="1S" first="5s"/>
-		<!-- ==============================================================================================报警提示=================================================================================================== -->
-		<!-- PEPS5.2 无钥匙启动系统未配置 -->
-		<view name="pepsnotcomplete" pid="pepsnotcomplete" freq="1HZ" repeat="ON" loop="5s" prority="7" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsnotcomplete" least="1S" first="5s"/>
-		<!-- PEPS1.1 未检测到智能钥匙 -->
-		<view name="pepsnotfindb" pid="pepsnotfindb" freq="1HZ" repeat="ON" loop="5s" prority="8" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsnotfindb" least="1S" first="5s"/>
-		<!-- PEPS3.2 请挂入 P 或 N 挡启动 -->
-		<view name="pepsswitchtoNP" pid="pepsswitchtoNP" freq="1HZ" repeat="ON" loop="5s" prority="9" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" audiobind="pepsswitchtoNP" least="1S" first="5s"/>
-		<!-- PEPS4.2 启动请踩刹车踏板 -->
-		<view name="pepsstepbreak" pid="pepsstepbreak" freq="1HZ" repeat="ON" loop="5s" prority="10" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsstepbreak" least="1S" first="5s"/>
-		<!-- PEPS4.3 请挂入P挡 -->
-		<view name="pepsswitchtoPStart" pid="pepsswitchtoPStart" freq="1HZ" repeat="ON" loop="5s" prority="11" type="notice" notifyType="notifyOne" mutex="OFF" power="wm2" audiobind="pepsswitchtoPStart" least="1S" first="5s"/>
-		<!-- PEPS1.3 请注意车内有智能钥匙 -->
-		<view name="pepsincar" pid="pepsincar" freq="1HZ" repeat="ON" loop="5s" prority="12" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsincar" least="1S" first="5s"/>
-		<!-- PEPS1.0 请关闭电源 -->
-		<view name="pepspoweroff" pid="pepspoweroff" freq="1HZ" repeat="ON" loop="5s" prority="13" type="notice" notifyType="notifyOne" mutex="OFF" power="wm2" audiobind="pepspoweroff" least="1S" first="5s"/>
-		<!-- PEPS2.0 未检测到智能钥匙 -->
-		<view name="pepsnotfindc" pid="pepsnotfindc" freq="1HZ" repeat="ON" loop="5s" prority="14" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsnotfindc" least="1S" first="5s"/>
-		<!-- PEPS3.1 智能钥匙电量低 -->
-		<view name="pepsbatterylow" pid="pepsbatterylow" freq="1HZ" repeat="ON" loop="5s" prority="15" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsbatterylow" least="1S" first="5s"/>
-		<!-- 可调式超速报警 -->
-		<view name="speedlimit" pid="speedlimit" repeat="OFF" loop="5s" prority="16" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" audiobind="overspeed" least="1S" first="5s"/>
-		<!-- 伴我回家 FOLLOW ME -->
-		<view name="followme" pid="followme" freq="1HZ" repeat="ON" loop="5s" prority="18" type="notice" notifyType="notifyOne" mutex="OFF" power="wm2" least="1S" first="5s"/>
-		<!-- TPMS(胎压)故障报警 -->
-		<view name="tiresystemfault" pid="tiresystemfault" showtime="10s" loop="5s" prority="19" type="notice" notifyType="notifyOne" mutex="OFF" repeat="ON" power="wm1" least="1S" first="5s"/>
-		<!-- 制动液位低报警 -->
-		<view name="brakefluidlow" pid="brakefluidlow" repeat="ON" loop="5s" prority="20" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- EPB故障 释放驻车时请踩下制动踏板 -->
-		<view name="epb_stepbreak" pid="epb_stepbreak" freq="1HZ" repeat="ON" loop="5s" prority="21" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
-		<!-- EPB故障 请关闭车门且系好安全带 -->
-		<view name="epb_door" pid="epb_door" freq="1HZ" repeat="ON" loop="5s" prority="21" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
-		<!-- EPB故障 驻车坡度过大请注意安全 -->
-		<view name="epb_slope" pid="epb_slope" freq="1HZ" repeat="ON" loop="5s" prority="21" type="notice" notifyType="notifyOne" mutex="ON" power="wm12" least="1S" first="5s"/>
-		<!-- AUTOHOLD 失效 -->
-		<view name="autohold_fail" pid="autohold_fail" freq="1HZ" repeat="ON" loop="5s" prority="22" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- AUTOHOLD 故障提示 -->
-		<view name="autohold_fault" pid="autohold_fault" freq="1HZ" repeat="ON" loop="5s" prority="23" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- AUTOHOLD 开启 -->
-		<view name="autohold_active" pid="autohold_active" freq="1HZ" repeat="OFF" loop="5s" prority="24" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- CDP失效 ESP 动态制动功能失效 -->
-		<view name="esp_cdp" pid="esp_cdp" freq="1HZ" repeat="ON" loop="5s" prority="25" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 手机遗忘 -->
-		<view name="phone" pid="phone" freq="1HZ" repeat="ON" loop="5s" prority="26" type="notice" notifyType="notifyOne" mutex="OFF" power="wm2" audiobind="phone" least="1S" first="5s"/>
-		<!-- 门开提示 所有门-->
-		<view name="doorinfo" pid="ALL" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
-		<!-- 门开提示 前左门 -->
-		<view name="doorinfo" pid="DRIVER_DOOR" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
-		<!-- 门开提示 前右门 -->
-		<view name="doorinfo" pid="PASSENGER_DOOR" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
-		<!-- 门开提示 后右门 -->
-		<view name="doorinfo" pid="REAR_RIGHT_DOOR" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
-		<!-- 门开提示 后左门 -->
-		<view name="doorinfo" pid="REAR_LEFT_DOOR" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
-		<!-- 门开提示 引擎盖 -->
-		<view name="doorinfo" pid="HOOD" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
-		<!-- 门开提示 后备箱 -->
-		<view name="doorinfo" pid="BACK_DOOR" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
-		<!-- 门开提示 解除所有提示-->
-		<view name="doorinfo" pid="nowarning" freq="1HZ" repeat="ON" loop="5s" prority="27" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>
-		<!-- 主驾驶安全带报警 -->
-		<view name="mainbelt" pid="mainbelt" freq="1HZ" repeat="OFF" loop="5s" prority="28" type="notice" notifyType="notifyOne" mutex="OFF" audiobind="drive_belt" power="wm1" least="1S" first="5s"/>
-		<!-- 副驾驶安全带报警 -->
-		<view name="passengerbelt" pid="passengerbelt" freq="1HZ" repeat="OFF" loop="5s" prority="29" type="notice" notifyType="notifyOne" mutex="OFF" audiobind="copilot_belt" power="wm1" least="1S" first="5s"/>
-		<!-- 安全气囊故障报警 -->
-		<view name="airbag" pid="airbag" repeat="ON" loop="5s" prority="30" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- ABS 故障报警 -->
-		<view name="abs_check" pid="abs_check" freq="1HZ" repeat="ON" loop="5s" prority="31" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- ESP 故障报警 -->
-		<view name="esp_check" pid="esp_check" freq="1HZ" repeat="ON" loop="5s" prority="32" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 下坡辅助系统故障 -->
-		<view name="hdc_fault" pid="hdc_fault" freq="1HZ" repeat="ON" loop="5s" prority="33" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 下坡辅助开启 -->
-		<view name="hdc_active" pid="hdc_active" freq="1HZ" repeat="OFF" loop="5s" prority="34" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- EPS 故障报警 -->
-		<view name="eps_check" pid="eps_check" freq="1HZ" repeat="ON" loop="5s" prority="35" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 全景系统故障报警 -->
-		<view name="avm_check" pid="avm_check" freq="1HZ" repeat="ON" loop="5s" prority="36" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 全景探头故障报警 后探头报警 -->
-		<view name="avm_fault" pid="rear" freq="1HZ" repeat="ON" loop="5s" prority="37" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
-		<!-- 全景探头故障报警 前探头报警 -->
-		<view name="avm_fault" pid="front" freq="1HZ" repeat="ON" loop="5s" prority="37" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
-		<!-- 全景探头故障报警 右探头报警 -->
-		<view name="avm_fault" pid="right" freq="1HZ" repeat="ON" loop="5s" prority="37" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
-		<!-- 全景探头故障报警 左探头报警 -->
-		<view name="avm_fault" pid="left" freq="1HZ" repeat="ON" loop="5s" prority="37" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
-		<!-- 全景探头故障报警 解除所有报警 -->
-		<view name="avm_fault" pid="nowarning" freq="1HZ" repeat="ON" loop="5s" prority="37" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" least="1S" first="5s"/>
-		<!-- LDW报警 车道偏离(左) -->
-		<view name="ldw_L" pid="ldw_L" freq="1HZ" repeat="ON" loop="5s" prority="38" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" audiobind="ldwsound" least="1S" first="5s"/>
-		<!-- LDW报警 车道偏离(右) -->
-		<view name="ldw_R" pid="ldw_R" freq="1HZ" repeat="ON" loop="5s" prority="38" type="notice" notifyType="notifyOne" mutex="ON" power="wm1" audiobind="ldwsound" least="1S" first="5s"/>
-		<!-- EPS 标定未完成 -->
-		<view name="eps_init" pid="eps_init" freq="1HZ" repeat="ON" loop="5s" prority="39" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 疲劳驾驶提醒 -->
-		<view name="restplease" pid="restplease" repeat="OFF" loop="5s" prority="40" type="notice" notifyType="notifyOne" mutex="OFF" audiobind="restplease" power="wm1" least="1S" first="5s"/>
-		<!-- 小灯未关报警 -->
-		<view name="parking" pid="parking" freq="1HZ" repeat="ON" loop="5s" prority="41" type="notice" notifyType="notifyOne" mutex="OFF" audiobind="parking" power="wm2" least="1S" first="5s"/>
-		<!-- 低荷电状态 -->
-		<view name="soclow" pid="soclow" freq="1HZ" repeat="OFF" loop="5s" prority="43" type="notice" notifyType="notifyOne" mutex="OFF" audiobind="soclow" power="wm1" least="1S" first="5s"/>
-		<!-- 充电禁行 -->
-		<view name="Charging" pid="UnloadChargingGun_Start" freq="1HZ" repeat="ON" loop="5s" prority="44" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 小电瓶充电故障报警 -->
-		<view name="ChargeFault" pid="ChargeFault" freq="1HZ" repeat="ON" loop="5s" prority="45" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 档位故障显示 -->
-		<view name="GearFault" pid="GearFault" freq="1HZ" repeat="ON" loop="5s" prority="46" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 真空助力系统故障 -->
-		<view name="VacuumPresWarn" pid="VacuumPresWarn" freq="1HZ" repeat="ON" loop="5s" prority="47" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 车辆故障 -->
-		<view name="VehicleFault" pid="VehicleFault" freq="1HZ" repeat="ON" loop="5s" prority="48" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 请启动车辆 -->
-		<view name="StartVehicle" pid="StartVehicle" freq="1HZ" repeat="ON" loop="5s" prority="49" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 请踩刹车换挡 -->
-		<view name="BreakToShift" pid="BreakToShift" freq="1HZ" repeat="ON" loop="5s" prority="50" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 请踩刹车并停车换挡 -->
-		<view name="Break_ParkingToShift" pid="Break_ParkingToShift" freq="1HZ" repeat="ON" loop="5s" prority="51" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 请停车换挡 -->
-		<view name="ParkingToShift" pid="ParkingToShift" freq="1HZ" repeat="ON" loop="5s" prority="52" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 请踩刹车，启动车辆 -->
-		<view name="Break_Start" pid="Break_Start" freq="1HZ" repeat="ON" loop="5s" prority="53" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 请挂入空挡，启动车辆 -->
-		<view name="SwitchtoN_Start" pid="SwitchtoN_Start" freq="1HZ" repeat="ON" loop="5s" prority="54" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 请拔充电枪，启动车辆 -->
-		<view name="UnloadChargingGun_Start" pid="UnloadChargingGun_Start" freq="1HZ" repeat="ON" loop="5s" prority="55" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 电量太低，无法进入Sport模式 -->
-		<view name="LowPower_Sport" pid="LowPower_Sport" freq="1HZ" repeat="ON" loop="5s" prority="56" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 电量太低，自动进入ECO模式 -->
-		<view name="LowPower_Enter_ECO" pid="LowPower_Enter_ECO" freq="1HZ" repeat="ON" loop="5s" prority="57" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 防盗认证失败，请重新启动 -->
-		<view name="AntiTheftFail_Restart" pid="AntiTheftFail_Restart" freq="1HZ" repeat="ON" loop="5s" prority="58" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 车辆故障，请靠边停车 -->
-		<view name="VehicleFault_Parking" pid="VehicleFault_Parking" freq="1HZ" repeat="ON" loop="5s" prority="59" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 人机交互指示 动力中断，请靠边停车 -->
-		<view name="3A5_PowerLost_Parking" pid="3A5_PowerLost_Parking" freq="1HZ" repeat="ON" loop="5s" prority="60" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 整车故障等级 驱动功率受限 -->
-		<view name="DrivePowerLimit" pid="DrivePowerLimit" freq="1HZ" repeat="ON" loop="5s" prority="61" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 整车故障等级 整车功率受限 -->
-		<view name="VehiclePowerLimit" pid="VehiclePowerLimit" freq="1HZ" repeat="ON" loop="5s" prority="62" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 整车故障等级 跛行模式 -->
-		<view name="LimpMode" pid="LimpMode" freq="1HZ" repeat="ON" loop="5s" prority="63" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<!-- 整车故障等级 动力中断立即靠边停车 -->
-		<view name="315_PowerLost_Parking" pid="315_PowerLost_Parking" freq="1HZ" repeat="ON" loop="5s" prority="64" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>
-		<view name="dtc_epb" pid="dtc_epb"  freq="1HZ" repeat="OFF" loop="5s" prority="65" type="fault" notifyType="notifyOne" mutex="OFF" power="wm12" least="1S" first="5s"/>	
-		<view name="oillow" pid="oillow"  freq="1HZ" repeat="OFF" loop="5s" prority="66" type="fault" notifyType="notifyOne" mutex="OFF" audiobind="oillow" power="wm1" least="1S" first="5s"/>	
-		<view name="WrongGear_P" pid="WrongGear_P"  freq="1HZ" repeat="OFF" loop="5s" prority="67" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>	
-		<!-- =================================================================================================================================================================================================== -->
-	</warningpage>
-</KEY_TYPE>
+<!-- M01-EV V1.1 报警信息 -->
+<warningpage name="warningpage" pid="warningpage">
+	<!-- ==============================================================================================报警==================================================================================================== -->
+	<!-- 门开报警(VehicleSpeed>10km/h) -->
+	<view name="doorwarn" pid="doorwarn" freq="1HZ" repeat="ON" loop="0s" prority="1" type="warning" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s">
+		<!-- 前左门 -->
+		<view name="DRIVER_DOOR" pid="DRIVER_DOOR"/>
+		<!-- 前右门 -->
+		<view name="PASSENGER_DOOR" pid="PASSENGER_DOOR"/>
+		<!-- 后右门 -->
+		<view name="REAR_RIGHT_DOOR" pid="REAR_RIGHT_DOOR"/>
+		<!-- 后左门 -->
+		<view name="REAR_LEFT_DOOR" pid="REAR_LEFT_DOOR"/>
+		<!-- 引擎盖 -->
+		<view name="HOOD" pid="HOOD"/>
+		<!-- 后备箱 -->
+		<view name="BACK_DOOR" pid="BACK_DOOR"/>
+	</view>
+	<!-- 可调式超速报警 -->
+	<view name="speedlimit" pid="speedlimit" repeat="OFF" loop="5s" prority="2" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" audiobind="overspeed" least="1S" first="5s"/>
+	<!-- 挡位误操作 -->
+	<view name="WrongGear_P" pid="WrongGear_P"  freq="1HZ" repeat="OFF" loop="5s" prority="3" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>	
+	<!-- 小灯未关报警 -->
+	<view name="parking" pid="parking" freq="1HZ" repeat="ON" loop="5s" prority="4" type="notice" notifyType="notifyOne" mutex="OFF" audiobind="parking" power="wm2" least="1S" first="5s"/>
+	<!-- 燃油低报警 -->
+	<view name="oillow" pid="oillow"  freq="1HZ" repeat="OFF" loop="5s" prority="5" type="fault" notifyType="notifyOne" mutex="OFF" audiobind="oillow" power="wm1" least="1S" first="5s"/>	
+	<!-- PEPS1.1 未检测到智能钥匙 -->
+	<view name="pepsnotfindb" pid="pepsnotfindb" freq="1HZ" repeat="ON" loop="5s" prority="6" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsnotfindb" least="1S" first="5s"/>
+	<!-- PEPS3.1 智能钥匙电量低 -->
+	<view name="pepsbatterylow" pid="pepsbatterylow" freq="1HZ" repeat="ON" loop="5s" prority="7" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsbatterylow" least="1S" first="5s"/>
+	<!-- 门开提示(VehicleSpeed<=10km/h) -->
+	<view name="doorinfo" pid="doorinfo" freq="1HZ" repeat="ON" loop="5s" prority="8" type="notice" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s">
+		<!-- 前左门 -->
+		<view name="DRIVER_DOOR" pid="DRIVER_DOOR"/>
+		<!-- 前右门 -->
+		<view name="PASSENGER_DOOR" pid="PASSENGER_DOOR"/>
+		<!-- 后右门 -->
+		<view name="REAR_RIGHT_DOOR" pid="REAR_RIGHT_DOOR"/>
+		<!-- 后左门 -->
+		<view name="REAR_LEFT_DOOR" pid="REAR_LEFT_DOOR"/>
+		<!-- 引擎盖 -->
+		<view name="HOOD" pid="HOOD"/>
+		<!-- 后备箱 -->
+		<view name="BACK_DOOR" pid="BACK_DOOR"/>
+	</view>
+	<!-- TPMS(胎压)故障报警 -->
+	<view name="tiresystemfault" pid="tiresystemfault" showtime="10s" loop="5s" prority="9" type="notice" notifyType="notifyOne" mutex="OFF" repeat="ON" power="wm1" audiobind="tirewarning" least="1S" first="5s"/>
+	<!-- =================================================================================================================================================================================================== -->
+</warningpage>

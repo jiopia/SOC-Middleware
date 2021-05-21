@@ -154,3 +154,13 @@ void ViewInfo::SetAlreadyExecutedFlag()
 {
     this->isAlreadyExecuted = true;
 }
+
+void ViewInfo::PushChildViewName(std::string childviewName)
+{
+    this->childViewNames.emplace_back(childviewName);
+}
+
+std::vector<std::string> ViewInfo::GetChildViewNames()
+{
+    return this->childViewNames;
+}

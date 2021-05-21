@@ -67,6 +67,10 @@ public:
 
     void SetAlreadyExecutedFlag();
 
+    void PushChildViewName(std::string childviewName);
+
+    std::vector<std::string> GetChildViewNames();
+
 private:
     /* data */
     std::string m_strKey;
@@ -83,8 +87,11 @@ private:
     std::string m_strPower;
     std::string m_strAudioBindInfo;
     int m_iLeast = -1;
+    VIEW_STATUS viewStatus = VIEW_OFF;
 
     bool isAlreadyExecuted = false;
+
+    std::vector<std::string> childViewNames;
 };
 
 #endif // !_VIEW_INFO_HPP_

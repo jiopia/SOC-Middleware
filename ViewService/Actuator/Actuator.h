@@ -28,6 +28,7 @@ public:
     int WarnShowTimerStop();
     bool IsIgnOFFCheck();
     void MsgSend(std::string strTopic, std::string strMsg);
+    void SendAudioWarnInfo(std::string strDataSend);
 
 protected:
     int WarnShowTimerInit();

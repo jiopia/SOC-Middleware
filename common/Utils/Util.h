@@ -23,9 +23,9 @@
 using namespace std;
 
 #define EOK 0
-#define IS_DEBUG_ON 1
 
 extern std::string strComponentName;
+extern bool g_debugFlag;
 
 #define GET_BIT(data, pos) (((data) >> (pos)) & 1)
 
@@ -47,7 +47,7 @@ extern std::string strComponentName;
 #define WHITE "\033[1;37m"
 
 #define DebugPrint(fmt, ...)                                                                                                                                                      \
-    if (IS_DEBUG_ON)                                                                                                                                                              \
+    if (g_debugFlag)                                                                                                                                                              \
     {                                                                                                                                                                             \
         time_t logTime = time(NULL);                                                                                                                                              \
         struct tm *currTime = localtime(&logTime);                                                                                                                                \
@@ -55,7 +55,7 @@ extern std::string strComponentName;
     }
 
 #define InfoPrint(fmt, ...)                                                                                                                                                               \
-    if (IS_DEBUG_ON)                                                                                                                                                                      \
+    if (g_debugFlag)                                                                                                                                                                      \
     {                                                                                                                                                                                     \
         time_t logTime = time(NULL);                                                                                                                                                      \
         struct tm *currTime = localtime(&logTime);                                                                                                                                        \
@@ -64,7 +64,7 @@ extern std::string strComponentName;
     }
 
 #define WarnPrint(fmt, ...)                                                                                                                                                                   \
-    if (IS_DEBUG_ON)                                                                                                                                                                          \
+    if (g_debugFlag)                                                                                                                                                                          \
     {                                                                                                                                                                                         \
         time_t logTime = time(NULL);                                                                                                                                                          \
         struct tm *currTime = localtime(&logTime);                                                                                                                                            \
@@ -73,7 +73,7 @@ extern std::string strComponentName;
     }
 
 #define ErrPrint(fmt, ...)                                                                                                                                                               \
-    if (IS_DEBUG_ON)                                                                                                                                                                     \
+    if (g_debugFlag)                                                                                                                                                                     \
     {                                                                                                                                                                                    \
         time_t logTime = time(NULL);                                                                                                                                                     \
         struct tm *currTime = localtime(&logTime);                                                                                                                                       \
@@ -82,7 +82,7 @@ extern std::string strComponentName;
     }
 
 #define CriticalPrint(fmt, ...)                                                                                                                                                                   \
-    if (IS_DEBUG_ON)                                                                                                                                                                              \
+    if (g_debugFlag)                                                                                                                                                                              \
     {                                                                                                                                                                                             \
         time_t logTime = time(NULL);                                                                                                                                                              \
         struct tm *currTime = localtime(&logTime);                                                                                                                                                \
@@ -174,9 +174,10 @@ inline float IEE754_HexToFloat(const unsigned char *ucSrcHex) // ucSrcHex[0] ucS
                                ucSrcHex[0];
 
     int sign = (ucSrcValue & 0x80000000) ? -1 : 1;                    //三目运算符
-    unsigned int exponent = ((ucSrcValue >> 23) & 0xff) - 127;        //先右移操作，再按位与计算，出来结果是30到23位对应的e
+    int iPower = ((ucSrcValue >> 23) & 0xff);                         //幂数的计算
+    int iFinalPower = iPower - 127;                                   //先右移操作，再按位与计算，出来结果是30到23位对应的e
     float mantissa = 1 + ((float)(ucSrcValue & 0x7fffff) / 0x7fffff); //将22~0转化为10进制，得到对应的x
-    return sign * mantissa * pow(2, exponent);
+    return sign * mantissa * pow(2, iFinalPower);
 }
 
 inline std::string FloatToStr(const float fSrc)

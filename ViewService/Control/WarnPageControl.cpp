@@ -36,33 +36,33 @@ std::string WarnPageControl::GetWarnPageDataToHMI(ViewNode viewNode)
         pIPCData.m_msgID = viewNode.strViewName.compare("doorinfo") == 0 ? HMI_MGS_WARNING_ID_DOORINFO : HMI_MGS_WARNING_ID_DOOR;
         pIPCData.m_msgLength = 0x06;
 
-        if (viewNode.strExtraInfo.compare("DRIVER_DOOR") == 0)
+        for (auto iter = viewNode.extraInfos.begin(); iter != viewNode.extraInfos.end(); iter++)
         {
-            pIPCData.m_msgData[0] = viewNode.viewStatus == VIEW_ON ? 0x01 : 0x00;
-        }
-        else if (viewNode.strExtraInfo.compare("PASSENGER_DOOR") == 0)
-        {
-            pIPCData.m_msgData[1] = viewNode.viewStatus == VIEW_ON ? 0x01 : 0x00;
-        }
-        else if (viewNode.strExtraInfo.compare("REAR_RIGHT_DOOR") == 0)
-        {
-            pIPCData.m_msgData[2] = viewNode.viewStatus == VIEW_ON ? 0x01 : 0x00;
-        }
-        else if (viewNode.strExtraInfo.compare("REAR_LEFT_DOOR") == 0)
-        {
-            pIPCData.m_msgData[3] = viewNode.viewStatus == VIEW_ON ? 0x01 : 0x00;
-        }
-        else if (viewNode.strExtraInfo.compare("HOOD") == 0)
-        {
-            pIPCData.m_msgData[4] = viewNode.viewStatus == VIEW_ON ? 0x01 : 0x00;
-        }
-        else if (viewNode.strExtraInfo.compare("BACK_DOOR") == 0)
-        {
-            pIPCData.m_msgData[5] = viewNode.viewStatus == VIEW_ON ? 0x01 : 0x00;
-        }
-        else if (viewNode.strExtraInfo.compare("nowarning") == 0)
-        {
-            memset(pIPCData.m_msgData, 0, sizeof(pIPCData.m_msgData));
+            ViewExtraInfo *tempExtraInfo = &(*iter);
+            if (tempExtraInfo->strExtraInfo == "DRIVER_DOOR")
+            {
+                pIPCData.m_msgData[0] = tempExtraInfo->viewStatus == VIEW_ON ? 0x01 : 0x00;
+            }
+            else if (tempExtraInfo->strExtraInfo == "PASSENGER_DOOR")
+            {
+                pIPCData.m_msgData[1] = tempExtraInfo->viewStatus == VIEW_ON ? 0x01 : 0x00;
+            }
+            else if (tempExtraInfo->strExtraInfo == "REAR_RIGHT_DOOR")
+            {
+                pIPCData.m_msgData[2] = tempExtraInfo->viewStatus == VIEW_ON ? 0x01 : 0x00;
+            }
+            else if (tempExtraInfo->strExtraInfo == "REAR_LEFT_DOOR")
+            {
+                pIPCData.m_msgData[3] = tempExtraInfo->viewStatus == VIEW_ON ? 0x01 : 0x00;
+            }
+            else if (tempExtraInfo->strExtraInfo == "HOOD")
+            {
+                pIPCData.m_msgData[4] = tempExtraInfo->viewStatus == VIEW_ON ? 0x01 : 0x00;
+            }
+            else if (tempExtraInfo->strExtraInfo == "BACK_DOOR")
+            {
+                pIPCData.m_msgData[5] = tempExtraInfo->viewStatus == VIEW_ON ? 0x01 : 0x00;
+            }
         }
     }
     else if (viewNode.strViewName.compare("speedlimit") == 0)

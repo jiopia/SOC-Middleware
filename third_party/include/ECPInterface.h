@@ -33,13 +33,18 @@ public:
     ECPInterface(std::unique_ptr<ECPComm> comm)
         : mExit(false),
           mComm(comm.release()),
-          mThread{&ECPInterface::rxThread, this} {}
-
+          mThread{&ECPInterface::rxThread, this}
+    {
+        /*set get all data from mcu*/
+        //vector<uint8_t> nVals(0);
+        //ECPVehicleValue InitData = {.length = (short)(sizeof(InitData.MsgType) + sizeof(InitData.MsgID) + nVals.size()), .MsgType = GET_PROPDATA, .MsgID = 0, .RawData = nVals} ;
+        //setValue(InitData, ECP_TYPE_MCU);
+    }
     virtual ~ECPInterface();
     void setMcuValue(const ECPVehicleValue &Value); //write data.....
     void setAndroidValue(const ECPVehicleValue &Value);
     void rxThread();
-    void registerGetDataCallBackFunc(ReadDataCallBack CallBackFunc, ECPCallBackType type);
+    void registerGetDataCallBackFunc(ReadDataCallBack CallBackFunc);
 
 private:
     void hex_array_printf(int loglevel, const char *func, const char *prefix, unsigned char *value, uint32_t size);
@@ -51,6 +56,6 @@ private:
     std::atomic<bool> mExit{false};
     std::unique_ptr<ECPComm> mComm;
     std::atomic<bool> isEcpSupport{true};
-    ReadDataCallBack ECPGetDataCallBackFunction[ECP_TYPE_MAX]; //callback function
+    ReadDataCallBack ECPGetDataCallBackFunction; //callback function
     std::thread mThread;
 };

@@ -8,24 +8,24 @@ Forwarder::~Forwarder()
 {
 }
 
-void Forwarder::MsgPush(std::string strMsg)
+void Forwarder::MsgPush(MsgData msgData)
 {
     std::lock_guard<std::mutex> lockGuard(m_mtx);
-    if (!strMsg.empty())
+    if (!msgData.Empty())
     {
-        this->m_msgQueue.push(strMsg);
+        this->m_msgQueue.push(msgData);
     }
 }
 
-std::string Forwarder::MsgPop()
+MsgData Forwarder::MsgPop()
 {
-    std::string strMsg;
+    MsgData msgData;
     std::lock_guard<std::mutex> lockGuard(m_mtx);
     if (!m_msgQueue.empty())
     {
-        strMsg = this->m_msgQueue.front();
+        msgData = this->m_msgQueue.front();
         this->m_msgQueue.pop();
     }
 
-    return strMsg;
+    return msgData;
 }

@@ -10,7 +10,7 @@ CoreMsgHandler::CoreMsgHandler() : m_jsonHandler(JsonHandler::GetInstance())
     std::unique_ptr<ECPComm> comm = std::make_unique<ECPComm>(); //实例化一个Comm设备
     ptrECP = new ECPInterface(std::move(comm));                  //实例化ECP对象
 
-    ptrECP->registerGetDataCallBackFunc(ReadCallBackFunc, ECP_TYPE_MCU); //注册数据接收函数的回调函数，同时需要传一个回调函数的类型ECP_TYPE_MCU;
+    ptrECP->registerGetDataCallBackFunc(ReadCallBackFunc); //注册数据接收函数的回调函数，同时需要传一个回调函数的类型ECP_TYPE_MCU;
 
     std::vector<std::string> strTopicList;
     strTopicList.emplace_back(MQTT_TOPIC_WARN_HMI_TO_MW);
@@ -72,13 +72,20 @@ void CoreMsgHandler::E02_MsgReciever(ECPVehicleValue rData)
     return;
 }
 
+void CoreMsgHandler::E02_Request(ECPVehicleValue requestValue)
+{
+    if (ptrECP != NULL)
+    {
+        ptrECP->setMcuValue(requestValue);
+    }
+}
+
 void CoreMsgHandler::Run()
 {
     std::thread msgRecieveTh(std::bind(&CoreMsgHandler::MsgReciever, this));
     msgRecieveTh.detach();
 
     InfoPrint("RUN......\n");
-    std::string strMsgSend;
     while (1)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
@@ -89,40 +96,45 @@ void CoreMsgHandler::MsgReciever()
 {
     while (1)
     {
-        std::string strMsg = Forwarder::GetInstance()->MsgPop();
-        if (!strMsg.empty())
+        MsgData msgData = Forwarder::GetInstance()->MsgPop();
+        if (!msgData.Empty())
         {
-            MsgProcessor(strMsg);
+            MqttMsgProcessor(msgData);
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 }
 
-void CoreMsgHandler::MsgProcessor(std::string strMsg)
+void CoreMsgHandler::MqttMsgProcessor(MsgData msgData)
 {
-    InfoPrint("Message:[%s] Comming\r\n", strMsg.c_str());
-    if (!strMsg.empty() && strMsg.length() == 4)
+    InfoPrint("Message:[%s] Comming From Topic:[%s]\r\n", msgData.strMsg.c_str(), msgData.strTopic.c_str());
+
+    /* HMI发送给中间件的消息 */
+    if (msgData.strTopic.compare(MQTT_TOPIC_WARN_HMI_TO_MW) == 0)
     {
-        typeInt2Chars nValChanges;
-        nValChanges.int32Val[0] = strtol(strMsg.substr(0, 2).c_str(), 0, 10);    //B3CC MsgType
-        nValChanges.int32Val[1] = strtol(strMsg.substr(2, 2).c_str(), 0, 10);    //B3CC MsgID
-        vector<uint8_t> getVals(nValChanges.uint8Val, nValChanges.uint8Val + 8); //value data
+        std::string strMsg = msgData.strMsg;
+        if (!strMsg.empty() && strMsg.length() == 4)
+        {
+            typeInt2Chars nValChanges;
+            nValChanges.int32Val[0] = strtol(strMsg.substr(0, 2).c_str(), 0, 10);    //B3CC MsgType
+            nValChanges.int32Val[1] = strtol(strMsg.substr(2, 2).c_str(), 0, 10);    //B3CC MsgID
+            vector<uint8_t> getVals(nValChanges.uint8Val, nValChanges.uint8Val + 8); //value data
 
-        ECPVehicleValue requestValue_t;
-        requestValue_t.MsgType = GET_PROPDATA; //E02_Get_MsgType
-        requestValue_t.MsgID = 0x00;           //E02_Get_MsgID
-        requestValue_t.RawData = getVals;      //E02_Get_MsgRawData
-        requestValue_t.length = sizeof(requestValue_t.MsgType) +
-                                sizeof(requestValue_t.MsgID) +
-                                requestValue_t.RawData.size(); //E02_Get_DataLen
-
-        ptrECP->setMcuValue(requestValue_t);
+            ECPVehicleValue requestValue_t;
+            requestValue_t.MsgType = GET_PROPDATA; //E02_Get_MsgType
+            requestValue_t.MsgID = 0x00;           //E02_Get_MsgID
+            requestValue_t.RawData = getVals;      //E02_Get_MsgRawData
+            requestValue_t.length = sizeof(requestValue_t.MsgType) +
+                                    sizeof(requestValue_t.MsgID) +
+                                    requestValue_t.RawData.size(); //E02_Get_DataLen
+            this->E02_Request(requestValue_t);
+        }
     }
 }
 
 void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen)
 {
-    InfoPrint("Now Process Data Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
+    InfoPrint("Now Process Action Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
     DebugPrintMsg(ucMsgData, iDataLen);
 
     IPCData ipcData;
@@ -136,22 +148,40 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
             return;
         }
 
-        switch (std::strtol(HexToStr(ucMsgData[0]).c_str(), 0, 16))
+        int ignStatus = std::strtol(HexToStr(ucMsgData[0]).c_str(), 0, 16);
+        VehicleAccStatus tempVehicleStatus = VEHICLE_DEFAULT;
+        switch (ignStatus)
         {
-        case 0x00:
-            m_vehicleStatus = VEHICLE_OFF;
+        case 0x10:
+            tempVehicleStatus = VEHICLE_OFF;
             break;
-        case 0x01:
-            m_vehicleStatus = VEHICLE_ACC;
+        case 0x11:
+            tempVehicleStatus = VEHICLE_ACC;
             break;
-        case 0x02:
-            m_vehicleStatus = VEHICLE_ON;
+        case 0x12:
+            tempVehicleStatus = VEHICLE_ON;
             break;
-        case 0x03:
-            m_vehicleStatus = VEHICLE_START;
+        case 0x13:
+            tempVehicleStatus = VEHICLE_START;
             break;
         default:
             break;
+        }
+
+        if (tempVehicleStatus != VEHICLE_DEFAULT &&
+            tempVehicleStatus != m_vehicleStatus)
+        {
+            m_vehicleStatus = tempVehicleStatus;
+            m_vehicleWorkData_t.setupInfo_t.ignStatus = m_vehicleStatus;
+
+            ExecPowerEvent(tempVehicleStatus);
+
+            unsigned char ignStatus = (m_vehicleStatus == VEHICLE_OFF) ? 0x00 : 0x01;
+            /* IGN状态 08 02 01 01 */
+            ipcData.m_msgType = HMI_MSG_TYPE_SETUP;        //B3CC MsgType
+            ipcData.m_msgID = HMI_MGS_SETUP_ID_IGN_STATUS; //B3CC MsgId
+            ipcData.m_msgLength = 0x01;                    //B3CC DataLength
+            ipcData.m_msgData[0] = ignStatus;
         }
     }
     break;
@@ -228,12 +258,9 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
             strViewName = "doorinfo";
         }
 
-        /* 仅以后备箱门作为测试 */
         if ((m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte3_t.doorOpenLight == 0x01) &&
             (uchDoorOpenLightStatus == 0x00))
         {
-            m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte3_t.doorOpenLight = 0x00;
-
             if (m_vehicleWorkData_t.warnInfo_t.door_info_t.frontLeftDoor)
             {
                 this->SendViewPageInfo(strViewName, "DRIVER_DOOR", "OFF");
@@ -329,6 +356,22 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
             memcpy(ipcData.m_msgData,
                    &m_vehicleWorkData_t.telltaleData_t.warn_light_t,
                    sizeof(m_vehicleWorkData_t.telltaleData_t.warn_light_t)); //B3CC MsgData
+
+            {
+                /* 故障列表信息更新 -- 门开提示/报警 */
+                if (strViewName.compare("doorwarn") == 0)
+                {
+                    m_vehicleWorkData_t.faultInfo_t.faultDoorOpenWarn = uchDoorOpenLightStatus;
+                    DebugPrint("Send Door Warn Fault Info:[%02X]\n", m_vehicleWorkData_t.faultInfo_t.faultDoorOpenWarn);
+                }
+                else
+                {
+                    m_vehicleWorkData_t.faultInfo_t.faultDoorOpenNotice = uchDoorOpenLightStatus;
+                    DebugPrint("Send Door Info Fault Info:[%02X]\n", m_vehicleWorkData_t.faultInfo_t.faultDoorOpenNotice);
+                }
+
+                this->SendFaultInfo();
+            }
         }
     }
     break;
@@ -372,8 +415,20 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
         int iValueByte1 = std::strtol(HexToStr(ucMsgData[2]).c_str(), 0, 16);
         unsigned char ucWarnInfoValueByte1 = iValueByte1 & 0xFF;
 
-        m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte3_t.driverBeltLight = GET_BIT(ucWarnInfoValueByte1, 0);
-        m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte3_t.passengerBeltLight = GET_BIT(ucWarnInfoValueByte1, 1);
+        if (m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte3_t.driverBeltLight != GET_BIT(ucWarnInfoValueByte1, 0))
+        {
+            m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte3_t.driverBeltLight = GET_BIT(ucWarnInfoValueByte1, 0);
+            std::string strStatus = m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte3_t.driverBeltLight ? "ON" : "OFF";
+            this->SendAudioWarnInfo("drive_belt", strStatus);
+        }
+
+        if (m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte3_t.passengerBeltLight != GET_BIT(ucWarnInfoValueByte1, 1))
+        {
+            m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte3_t.passengerBeltLight = GET_BIT(ucWarnInfoValueByte1, 1);
+            std::string strStatus = m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte3_t.passengerBeltLight ? "ON" : "OFF";
+            this->SendAudioWarnInfo("copilot_belt", strStatus);
+        }
+
         m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte6_t.oilPressureLow = GET_BIT(ucWarnInfoValueByte1, 3);
 
         int iValueByte2 = std::strtol(HexToStr(ucMsgData[1]).c_str(), 0, 16);
@@ -456,6 +511,9 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
             m_vehicleWorkData_t.warnInfo_t.peps_info_t.peps4_NoKeyC = GET_BIT(ucPEPSInfo, 4);
             std::string strStatus = m_vehicleWorkData_t.warnInfo_t.peps_info_t.peps4_NoKeyC ? "ON" : "OFF";
             this->SendViewPageInfo("pepsnotfindb", "pepsnotfindb", strStatus);
+
+            m_vehicleWorkData_t.faultInfo_t.faultPeps2NoKey = GET_BIT(ucPEPSInfo, 4);
+            this->SendFaultInfo();
         }
 
         if (m_vehicleWorkData_t.warnInfo_t.peps_info_t.peps6_KeyBattLow != GET_BIT(ucPEPSInfo, 5))
@@ -463,6 +521,9 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
             m_vehicleWorkData_t.warnInfo_t.peps_info_t.peps6_KeyBattLow = GET_BIT(ucPEPSInfo, 5);
             std::string strStatus = m_vehicleWorkData_t.warnInfo_t.peps_info_t.peps6_KeyBattLow ? "ON" : "OFF";
             this->SendViewPageInfo("pepsbatterylow", "pepsbatterylow", strStatus);
+
+            m_vehicleWorkData_t.faultInfo_t.faultPeps6KeyBattLow = GET_BIT(ucPEPSInfo, 5);
+            this->SendFaultInfo();
         }
     }
     break;
@@ -540,6 +601,9 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
             m_vehicleWorkData_t.warnInfo_t.dtc_info_t.switchToP = GET_BIT(ucDTCInfo, 6);
             std::string strStatus = m_vehicleWorkData_t.warnInfo_t.dtc_info_t.switchToP ? "ON" : "OFF";
             this->SendViewPageInfo("WrongGear_P", "WrongGear_P", strStatus);
+
+            m_vehicleWorkData_t.faultInfo_t.faultWrongGear = GET_BIT(ucDTCInfo, 6);
+            this->SendFaultInfo();
         }
     }
     break;
@@ -640,6 +704,8 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
                 /* 超速报警 */
                 this->SendViewPageInfo("speedlimit", "speedlimit", "ON");
                 m_vehicleWorkData_t.warnInfo_t.over_speed_t.overSpeed = 0x01;
+                m_vehicleWorkData_t.faultInfo_t.faultOverSpeed = 0x01;
+                this->SendFaultInfo();
             }
         }
         else
@@ -649,6 +715,8 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
                 /* 超速报警 */
                 this->SendViewPageInfo("speedlimit", "speedlimit", "OFF");
                 m_vehicleWorkData_t.warnInfo_t.over_speed_t.overSpeed = 0x00;
+                m_vehicleWorkData_t.faultInfo_t.faultOverSpeed = 0x00;
+                this->SendFaultInfo();
             }
         }
     }
@@ -661,9 +729,8 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
         DebugPrintMsg(ucMsgData, iDataLen);
 
         /* 
-            燃油量: 02 04 02 XXYY
-            XX：燃油量(0%~100%)
-            YY：显示段(仪表格段显示，目前最多支持8段)
+            燃油量: 02 04 01 XX
+            XX：显示段(仪表格段显示，目前最多支持8段)
         */
         static unsigned char uchOilVolumeValue = 0x00;
         int iValumePercentValue = std::strtol(HexToStr(ucMsgData[0]).c_str(), 0, 16);
@@ -724,12 +791,18 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
             {
                 m_vehicleWorkData_t.warnInfo_t.oil_low_t.oilLowWarn = 0x01;
                 this->SendViewPageInfo("oillow", "oillow", "ON");
+
+                m_vehicleWorkData_t.faultInfo_t.faultOilLow = 0x01;
+                this->SendFaultInfo();
             }
         }
         else if (m_vehicleWorkData_t.warnInfo_t.oil_low_t.oilLowWarn != 0x00)
         {
             m_vehicleWorkData_t.warnInfo_t.oil_low_t.oilLowWarn = 0x00;
             this->SendViewPageInfo("oillow", "oillow", "OFF");
+
+            m_vehicleWorkData_t.faultInfo_t.faultOilLow = 0x00;
+            this->SendFaultInfo();
         }
     }
     break;
@@ -741,18 +814,74 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
             break;
         }
 
+        /* 
+            水温: 02 03 01 XX
+            XX：显示段(仪表格段显示，目前最多支持8段)
+        */
+        static unsigned char uchCoolandTempVolumeValue = 0x00;
         float fCoolantTemp = IEE754_HexToFloat(&ucMsgData[1]);
         std::string strCoolantTemp = FloatToStr(fCoolantTemp); //MsgByte[4] ~ MsgByte[1]
         InfoPrint("CoolantTemp:[%.4f]\n", fCoolantTemp);
         InfoPrint("CoolantTemp HexData:");
         DebugPrintMsg(&ucMsgData[0], iDataLen);
-        m_vehicleWorkData_t.gaugeData_t.coolantTemprature = fCoolantTemp;
 
-        /* 冷却液温度 02 03 04 000006F1 */
+        int iValumePercentValue = (int)fCoolantTemp;
+        if (m_vehicleWorkData_t.gaugeData_t.coolantTemprature != fCoolantTemp)
+        {
+            m_vehicleWorkData_t.gaugeData_t.coolantTemprature = fCoolantTemp;
+            std::string strStatus = iValumePercentValue >= g_iFullCoolandTemp ? "ON" : "OFF";
+            this->SendAudioWarnInfo("coolandtemperaturehigh", strStatus);
+        }
+
+        if (iValumePercentValue < g_iFullCoolandTemp * 1 / 8)
+        {
+            uchCoolandTempVolumeValue = 0x00;
+        }
+        else if (g_iFullCoolandTemp * 1 / 8 <= iValumePercentValue &&
+                 iValumePercentValue < g_iFullCoolandTemp * 2 / 8)
+        {
+            uchCoolandTempVolumeValue = 0x01;
+        }
+        else if (g_iFullCoolandTemp * 2 / 8 <= iValumePercentValue &&
+                 iValumePercentValue < g_iFullCoolandTemp * 3 / 8)
+        {
+            uchCoolandTempVolumeValue = 0x02;
+        }
+        else if (g_iFullCoolandTemp * 3 / 8 <= iValumePercentValue &&
+                 iValumePercentValue < g_iFullCoolandTemp * 4 / 8)
+        {
+            uchCoolandTempVolumeValue = 0x03;
+        }
+        else if (g_iFullCoolandTemp * 4 / 8 <= iValumePercentValue &&
+                 iValumePercentValue < g_iFullCoolandTemp * 5 / 8)
+        {
+            uchCoolandTempVolumeValue = 0x04;
+        }
+        else if (g_iFullCoolandTemp * 5 / 8 <= iValumePercentValue &&
+                 iValumePercentValue < g_iFullCoolandTemp * 6 / 8)
+        {
+            uchCoolandTempVolumeValue = 0x05;
+        }
+        else if (g_iFullCoolandTemp * 6 / 8 <= iValumePercentValue &&
+                 iValumePercentValue < g_iFullCoolandTemp * 7 / 8)
+        {
+            uchCoolandTempVolumeValue = 0x06;
+        }
+        else if (g_iFullCoolandTemp * 7 / 8 <= iValumePercentValue &&
+                 iValumePercentValue < g_iFullCoolandTemp * 8 / 8)
+        {
+            uchCoolandTempVolumeValue = 0x07;
+        }
+        else if (g_iFullCoolandTemp * 8 / 8 <= iValumePercentValue)
+        {
+            uchCoolandTempVolumeValue = 0x08;
+        }
+
+        /* 冷却液温度 02 03 01 XX */
         std::string strMsgType = HexToStr(HMI_MGS_TYPE_GUAGE);                 //B3CC MsgType
         std::string strMsgId = HexToStr(HMI_MGS_GUAGE_ID_COOLANT_TEMPERATURE); //B3CC MsgId(冷却液温度)
-        std::string strLen = HexToStr(strCoolantTemp.length());                //B3CC DataLength
-        std::string strMsgData = strCoolantTemp;
+        std::string strLen = HexToStr(0x01);                                   //B3CC DataLength
+        std::string strMsgData = HexToStr(uchCoolandTempVolumeValue);
 
         std::string strMsgSend;
         strMsgSend.append(strMsgType).append(strMsgId).append(strLen).append(strMsgData);
@@ -1012,6 +1141,9 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
             m_vehicleWorkData_t.warnInfo_t.tire_info_t.tirePressureWarn = ucMsgData[0] & 0x01;
             std::string strStatus = m_vehicleWorkData_t.warnInfo_t.tire_info_t.tirePressureWarn ? "ON" : "OFF";
             this->SendViewPageInfo("tiresystemfault", "tiresystemfault", strStatus);
+
+            m_vehicleWorkData_t.faultInfo_t.faultTireSysWarn = ucMsgData[0] & 0x01;
+            this->SendFaultInfo();
         }
     }
     break;
@@ -1096,9 +1228,10 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
         if (m_vehicleWorkData_t.warnInfo_t.tire_info_t.frontLeftTireFault != GET_BIT(ucMsgData[0], 7))
         {
             m_vehicleWorkData_t.warnInfo_t.tire_info_t.frontLeftTireFault = GET_BIT(ucMsgData[0], 7);
-            std::string strMsgData = HexToStr(TIRE_FRONT_LEFT) +
-                                     HexToStr(m_vehicleWorkData_t.warnInfo_t.tire_info_t.frontLeftTireFault);
+            unsigned char uchTireWarnValue =
+                m_vehicleWorkData_t.warnInfo_t.tire_info_t.frontLeftTireFault ? BDHMI_TIRE_HIGH_PRESSURE : 0x00;
 
+            std::string strMsgData = HexToStr(TIRE_FRONT_LEFT) + HexToStr(uchTireWarnValue);
             std::string strMsgType = HexToStr(HMI_MSG_TYPE_WARNING);             //B3CC MsgType
             std::string strMsgId = HexToStr(HMI_MGS_WARNING_ID_TIRE_PRESS_WARN); //B3CC MsgId
             std::string strLen = HexToStr(strMsgData.length());                  //B3CC DataLength
@@ -1111,9 +1244,10 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
         if (m_vehicleWorkData_t.warnInfo_t.tire_info_t.frontRightTireFault != GET_BIT(ucMsgData[0], 6))
         {
             m_vehicleWorkData_t.warnInfo_t.tire_info_t.frontRightTireFault = GET_BIT(ucMsgData[0], 6);
-            std::string strMsgData = HexToStr(TIRE_FRONT_RIGHT) +
-                                     HexToStr(m_vehicleWorkData_t.warnInfo_t.tire_info_t.frontRightTireFault);
+            unsigned char uchTireWarnValue =
+                m_vehicleWorkData_t.warnInfo_t.tire_info_t.frontRightTireFault ? BDHMI_TIRE_HIGH_PRESSURE : 0x00;
 
+            std::string strMsgData = HexToStr(TIRE_FRONT_RIGHT) + HexToStr(uchTireWarnValue);
             std::string strMsgType = HexToStr(HMI_MSG_TYPE_WARNING);             //B3CC MsgType
             std::string strMsgId = HexToStr(HMI_MGS_WARNING_ID_TIRE_PRESS_WARN); //B3CC MsgId
             std::string strLen = HexToStr(strMsgData.length());                  //B3CC DataLength
@@ -1126,9 +1260,10 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
         if (m_vehicleWorkData_t.warnInfo_t.tire_info_t.rearLeftTireFault != GET_BIT(ucMsgData[0], 5))
         {
             m_vehicleWorkData_t.warnInfo_t.tire_info_t.rearLeftTireFault = GET_BIT(ucMsgData[0], 5);
-            std::string strMsgData = HexToStr(TIRE_REAR_LEFT) +
-                                     HexToStr(m_vehicleWorkData_t.warnInfo_t.tire_info_t.rearLeftTireFault);
+            unsigned char uchTireWarnValue =
+                m_vehicleWorkData_t.warnInfo_t.tire_info_t.rearLeftTireFault ? BDHMI_TIRE_HIGH_PRESSURE : 0x00;
 
+            std::string strMsgData = HexToStr(TIRE_REAR_LEFT) + HexToStr(uchTireWarnValue);
             std::string strMsgType = HexToStr(HMI_MSG_TYPE_WARNING);             //B3CC MsgType
             std::string strMsgId = HexToStr(HMI_MGS_WARNING_ID_TIRE_PRESS_WARN); //B3CC MsgId
             std::string strLen = HexToStr(strMsgData.length());                  //B3CC DataLength
@@ -1141,9 +1276,10 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
         if (m_vehicleWorkData_t.warnInfo_t.tire_info_t.rearRightTireFault != GET_BIT(ucMsgData[0], 4))
         {
             m_vehicleWorkData_t.warnInfo_t.tire_info_t.rearRightTireFault = GET_BIT(ucMsgData[0], 4);
-            std::string strMsgData = HexToStr(TIRE_REAR_RIGHT) +
-                                     HexToStr(m_vehicleWorkData_t.warnInfo_t.tire_info_t.rearRightTireFault);
+            unsigned char uchTireWarnValue =
+                m_vehicleWorkData_t.warnInfo_t.tire_info_t.rearRightTireFault ? BDHMI_TIRE_HIGH_PRESSURE : 0x00;
 
+            std::string strMsgData = HexToStr(TIRE_REAR_RIGHT) + HexToStr(uchTireWarnValue);
             std::string strMsgType = HexToStr(HMI_MSG_TYPE_WARNING);             //B3CC MsgType
             std::string strMsgId = HexToStr(HMI_MGS_WARNING_ID_TIRE_PRESS_WARN); //B3CC MsgId
             std::string strLen = HexToStr(strMsgData.length());                  //B3CC DataLength
@@ -1161,7 +1297,7 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
 
 void CoreMsgHandler::NodeAliveMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen)
 {
-    InfoPrint("Now Process Data Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
+    InfoPrint("Now Process Node Alive Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
     DebugPrintMsg(ucMsgData, iDataLen);
 
     IPCData ipcData;
@@ -1184,34 +1320,61 @@ void CoreMsgHandler::NodeAliveMsgHandler(uint32_t uiMsgId, const unsigned char *
 
 void CoreMsgHandler::InteractiveMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen)
 {
-    InfoPrint("Now Process Data Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
+    InfoPrint("Now Process Interactive Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
     DebugPrintMsg(ucMsgData, iDataLen);
 
+    IPCData ipcData;
     switch (uiMsgId)
     {
     /* 多媒体 */
     case MTYPE_INTERACTIVE_MSGID_MUSIC:
     {
-        switch (ucMsgData[0])
+        unsigned char uchMusicInfoType = ucMsgData[0];
+        switch (uchMusicInfoType)
         {
         case MUSIC_CLOSE:
         {
+            /* 多媒体音乐关闭 05 05 01 00 */
+            ipcData.m_msgType = HMI_MSG_TYPE_NAVI;          //B3CC MsgType
+            ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_CLEAR; //B3CC MsgId
+            ipcData.m_msgLength = 0x01;                     //B3CC DataLength
+            ipcData.m_msgData[0] = 0x00;
         }
         break;
         case MUSIC_PROCESS:
         {
+            /* 多媒体音乐进度 05 06 XX YY...ZZ */
+            ipcData.m_msgType = HMI_MSG_TYPE_NAVI;             //B3CC MsgType
+            ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_POSITION; //B3CC MsgId
+            ipcData.m_msgLength = iDataLen - 1;                //B3CC DataLength
+            memcpy(ipcData.m_msgData, &ucMsgData[1], iDataLen - 1);
         }
         break;
         case MUSIC_ALBUM:
         {
+            /* 多媒体音乐专辑 05 07 XX YY...ZZ */
+            ipcData.m_msgType = HMI_MSG_TYPE_NAVI;          //B3CC MsgType
+            ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_ALBUM; //B3CC MsgId
+            ipcData.m_msgLength = iDataLen - 1;             //B3CC DataLength
+            memcpy(ipcData.m_msgData, &ucMsgData[1], iDataLen - 1);
         }
         break;
         case MUSIC_NAME:
         {
+            /* 多媒体音乐名称 05 08 XX YY...ZZ */
+            ipcData.m_msgType = HMI_MSG_TYPE_NAVI;          //B3CC MsgType
+            ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_TITLE; //B3CC MsgId
+            ipcData.m_msgLength = iDataLen - 1;             //B3CC DataLength
+            memcpy(ipcData.m_msgData, &ucMsgData[1], iDataLen - 1);
         }
         break;
         case MUSIC_AUTHOR:
         {
+            /* 多媒体音乐歌手名称 05 09 XX YY...ZZ */
+            ipcData.m_msgType = HMI_MSG_TYPE_NAVI;           //B3CC MsgType
+            ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_ARTIST; //B3CC MsgId
+            ipcData.m_msgLength = iDataLen - 1;              //B3CC DataLength
+            memcpy(ipcData.m_msgData, &ucMsgData[1], iDataLen - 1);
         }
         break;
         default:
@@ -1222,41 +1385,55 @@ void CoreMsgHandler::InteractiveMsgHandler(uint32_t uiMsgId, const unsigned char
     /* 电话 */
     case MTYPE_INTERACTIVE_MSGID_PHONE:
     {
-        switch (ucMsgData[0])
-        {
-        case PHONE_CLEAR:
-        {
-        }
-        break;
-        case PHONE_STATUS:
-        {
-        }
-        break;
-        case PHONE_CALL_NAME:
-        {
-        }
-        break;
-        case PHONE_CALL_NUMBER:
-        {
-        }
-        break;
-        case PHONE_CALL_TIME:
-        {
-        }
-        break;
-        default:
-            break;
-        }
+    }
+    break;
+    /* 导航激活状态 */
+    case NAVIGATION_STATUS:
+    {
+        unsigned char uchNaviStatus = GET_BIT(ucMsgData[0], 0);
+        ipcData.m_msgType = HMI_MSG_TYPE_NAVI;               //B3CC MsgType
+        ipcData.m_msgID = HMI_MGS_NAVI_ID_NAVIGATION_STATUS; //B3CC MsgId
+        ipcData.m_msgLength = 0x01;                          //B3CC DataLength
+        ipcData.m_msgData[0] = uchNaviStatus;
+    }
+    break;
+    /* 导航信息 */
+    case NAVIGATION_CROSSING_INDEX:
+    {
+        unsigned int uchNaviInfo = ucMsgData[0];
+        ipcData.m_msgType = HMI_MSG_TYPE_NAVI;             //B3CC MsgType
+        ipcData.m_msgID = HMI_MGS_NAVI_ID_NAVIGATION_INFO; //B3CC MsgId
+        ipcData.m_msgLength = 0x01;                        //B3CC DataLength
+        ipcData.m_msgData[0] = uchNaviInfo;
+    }
+    break;
+    /* 路口信息 */
+    case NAVIGATION_NEXT_CROSSING_NAME:
+    {
+        ipcData.m_msgType = HMI_MSG_TYPE_NAVI;           //B3CC MsgType
+        ipcData.m_msgID = HMI_MGS_NAVI_ID_CROSSING_INFO; //B3CC MsgId
+        ipcData.m_msgLength = iDataLen;                  //B3CC DataLength
+        memcpy(ipcData.m_msgData, &ucMsgData[0], iDataLen);
     }
     break;
     default:
         break;
     }
+
+    if (ipcData.m_msgType != 0x00)
+    {
+        std::string strMsgType = HexToStr(ipcData.m_msgType);
+        std::string strMsgId = HexToStr(ipcData.m_msgID);
+        std::string strMsgLen = HexToStr(ipcData.m_msgLength);
+
+        std::string strMsgSend = strMsgType + strMsgId + strMsgLen + UCharArrToStr(ipcData.m_msgData, ipcData.m_msgLength);
+        m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_MW_TO_HMI), strMsgSend);
+    }
 }
 
 void CoreMsgHandler::SetupMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen)
 {
-    InfoPrint("Now Process Data Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
+    InfoPrint("Now Process Setup Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
     DebugPrintMsg(ucMsgData, iDataLen);
 
     switch (uiMsgId)
@@ -1304,12 +1481,12 @@ void CoreMsgHandler::SetupMsgHandler(uint32_t uiMsgId, const unsigned char *ucMs
 
 void CoreMsgHandler::KeyMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen)
 {
-    InfoPrint("Now Process Data Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
+    InfoPrint("Now Process Key Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
     DebugPrintMsg(ucMsgData, iDataLen);
 
     switch (uiMsgId)
     {
-    /* 按键 */
+    /* 按键 [XX] [YY] => [KeyValue] [KeyStatus]*/
     case MTYPE_KEY_MSGID_KEY:
     {
         if (iDataLen != 2)
@@ -1318,10 +1495,13 @@ void CoreMsgHandler::KeyMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgD
             break;
         }
 
+        std::string strKeyValue = HexToStr(ucMsgData[0]);
+        std::string strKeyStatus = HexToStr(ucMsgData[1]);
+
         std::string strMsgType = HexToStr(HMI_MSG_TYPE_KEY); //B3CC MsgType
         std::string strMsgId = HexToStr(HMI_MGS_KEY_ID_KEY); //B3CC MsgId
-        std::string strLen = HexToStr(0x01);                 //B3CC DataLength
-        std::string strMsgData = HexToStr(ucMsgData[1]);
+        std::string strLen = HexToStr(0x02);                 //B3CC DataLength
+        std::string strMsgData = strKeyValue + strKeyStatus;
 
         std::string strMsgSend;
         strMsgSend.append(strMsgType).append(strMsgId).append(strLen).append(strMsgData);
@@ -1335,7 +1515,7 @@ void CoreMsgHandler::KeyMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgD
 
 void CoreMsgHandler::EOLMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen)
 {
-    InfoPrint("Now Process Data Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
+    InfoPrint("Now Process EOL Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
     DebugPrintMsg(ucMsgData, iDataLen);
 }
 
@@ -1354,6 +1534,36 @@ void CoreMsgHandler::SendAudioWarnInfo(std::string strAudioName, std::string str
     {
         std::string strMsgSend = m_jsonHandler->GetWarnSendData(strAudioName, strAudioName, strStatus);
         m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_AUDIO), strMsgSend);
+    }
+}
+
+void CoreMsgHandler::SendFaultInfo()
+{
+    IPCData ipcData;
+    ipcData.m_msgType = HMI_MSG_TYPE_FAULT;                        //B3CC MsgType
+    ipcData.m_msgID = HMI_MGS_FAULT_ID_INFO;                       //B3CC MsgId
+    ipcData.m_msgLength = sizeof(m_vehicleWorkData_t.faultInfo_t); //B3CC DataLength
+    memcpy(ipcData.m_msgData,
+           &m_vehicleWorkData_t.faultInfo_t,
+           sizeof(m_vehicleWorkData_t.faultInfo_t));
+
+    std::string strMsgType = HexToStr(ipcData.m_msgType);
+    std::string strMsgId = HexToStr(ipcData.m_msgID);
+    std::string strMsgLen = HexToStr(ipcData.m_msgLength);
+
+    std::string strMsgSend = strMsgType + strMsgId + strMsgLen + UCharArrToStr(ipcData.m_msgData, ipcData.m_msgLength);
+    m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_MW_TO_HMI), strMsgSend);
+}
+
+void CoreMsgHandler::ExecPowerEvent(VehicleAccStatus accStatus)
+{
+    if (accStatus == VEHICLE_OFF)
+    {
+        release_event();
+    }
+    else
+    {
+        acquire_event();
     }
 }
 

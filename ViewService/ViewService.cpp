@@ -4,6 +4,7 @@
 #include "Actuator.h"
 
 std::string strComponentName = "ViewService";
+bool g_debugFlag = true;
 
 int main(int argc, char *argv[])
 {
@@ -11,7 +12,7 @@ int main(int argc, char *argv[])
 	{
 		return EXIT_FAILURE;
 	}
-	
+
 	std::string fileName(argv[1]);
 	XmlManager::GetInstance()->XmlParse(fileName);
 	Actuator::GetInstance()->Start();
