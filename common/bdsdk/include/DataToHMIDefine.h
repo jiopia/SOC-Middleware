@@ -11,7 +11,7 @@
 
 const float g_fSppedDoorOpenWarn = 9.50;
 const float g_fSpeedOverLimitAlarm = 119.50;
-const int g_iFullCoolandTemp = 80; //0,10 10,20 20,30 30,40 40,50 50,60 60,70 70,80
+const int g_iFullCoolandTemp = 121; //0,10 10,20 20,30 30,40 40,50 50,60 60,70 70,80
 
 struct IPCData
 {

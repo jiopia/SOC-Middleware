@@ -29,7 +29,7 @@
 	<!-- PEPS3.1 智能钥匙电量低 -->
 	<view name="pepsbatterylow" pid="pepsbatterylow" freq="1HZ" repeat="ON" loop="5s" prority="7" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsbatterylow" least="1S" first="5s"/>
 	<!-- 门开提示(VehicleSpeed<=10km/h) -->
-	<view name="doorinfo" pid="doorinfo" freq="1HZ" repeat="ON" loop="5s" prority="8" type="notice" notifyType="notifyAll" mutex="OFF" power="wm1" audiobind="dooropen" least="1S" first="5s">
+	<view name="doorinfo" pid="doorinfo" freq="1HZ" repeat="ON" loop="5s" prority="8" type="notice" notifyType="notifyAll" mutex="OFF" power="wm1" least="1S" first="5s">
 		<!-- 前左门 -->
 		<view name="DRIVER_DOOR" pid="DRIVER_DOOR"/>
 		<!-- 前右门 -->

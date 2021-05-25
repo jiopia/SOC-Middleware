@@ -833,46 +833,39 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
             this->SendAudioWarnInfo("coolandtemperaturehigh", strStatus);
         }
 
-        if (iValumePercentValue < g_iFullCoolandTemp * 1 / 8)
+        if (iValumePercentValue < 40)
         {
             uchCoolandTempVolumeValue = 0x00;
         }
-        else if (g_iFullCoolandTemp * 1 / 8 <= iValumePercentValue &&
-                 iValumePercentValue < g_iFullCoolandTemp * 2 / 8)
+        else if (40 <= iValumePercentValue && iValumePercentValue < 45)
         {
             uchCoolandTempVolumeValue = 0x01;
         }
-        else if (g_iFullCoolandTemp * 2 / 8 <= iValumePercentValue &&
-                 iValumePercentValue < g_iFullCoolandTemp * 3 / 8)
+        else if (45 <= iValumePercentValue && iValumePercentValue < 50)
         {
             uchCoolandTempVolumeValue = 0x02;
         }
-        else if (g_iFullCoolandTemp * 3 / 8 <= iValumePercentValue &&
-                 iValumePercentValue < g_iFullCoolandTemp * 4 / 8)
+        else if (50 <= iValumePercentValue && iValumePercentValue < 55)
         {
             uchCoolandTempVolumeValue = 0x03;
         }
-        else if (g_iFullCoolandTemp * 4 / 8 <= iValumePercentValue &&
-                 iValumePercentValue < g_iFullCoolandTemp * 5 / 8)
+        else if (55 <= iValumePercentValue && iValumePercentValue < 110)
         {
             uchCoolandTempVolumeValue = 0x04;
         }
-        else if (g_iFullCoolandTemp * 5 / 8 <= iValumePercentValue &&
-                 iValumePercentValue < g_iFullCoolandTemp * 6 / 8)
+        else if (110 <= iValumePercentValue && iValumePercentValue < 115)
         {
             uchCoolandTempVolumeValue = 0x05;
         }
-        else if (g_iFullCoolandTemp * 6 / 8 <= iValumePercentValue &&
-                 iValumePercentValue < g_iFullCoolandTemp * 7 / 8)
+        else if (115 <= iValumePercentValue && iValumePercentValue < 120)
         {
             uchCoolandTempVolumeValue = 0x06;
         }
-        else if (g_iFullCoolandTemp * 7 / 8 <= iValumePercentValue &&
-                 iValumePercentValue < g_iFullCoolandTemp * 8 / 8)
+        else if (120 <= iValumePercentValue && iValumePercentValue < 130)
         {
             uchCoolandTempVolumeValue = 0x07;
         }
-        else if (g_iFullCoolandTemp * 8 / 8 <= iValumePercentValue)
+        else if (130 <= iValumePercentValue)
         {
             uchCoolandTempVolumeValue = 0x08;
         }
@@ -1495,8 +1488,8 @@ void CoreMsgHandler::KeyMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgD
             break;
         }
 
-        std::string strKeyValue = HexToStr(ucMsgData[0]);
-        std::string strKeyStatus = HexToStr(ucMsgData[1]);
+        std::string strKeyStatus = HexToStr(ucMsgData[0]);
+        std::string strKeyValue = HexToStr(ucMsgData[1]);
 
         std::string strMsgType = HexToStr(HMI_MSG_TYPE_KEY); //B3CC MsgType
         std::string strMsgId = HexToStr(HMI_MGS_KEY_ID_KEY); //B3CC MsgId
