@@ -72,11 +72,24 @@ void CoreMsgHandler::E02_MsgReciever(ECPVehicleValue rData)
     return;
 }
 
-void CoreMsgHandler::E02_Request(ECPVehicleValue requestValue)
+void CoreMsgHandler::E02_Request(uint32_t uiMsgType, uint32_t uiMsgId)
 {
     if (ptrECP != NULL)
     {
-        ptrECP->setMcuValue(requestValue);
+        typeInt2Chars nValChanges;
+        nValChanges.int32Val[0] = uiMsgType;                                     //B3CC MsgType
+        nValChanges.int32Val[1] = uiMsgId;                                       //B3CC MsgID
+        vector<uint8_t> getVals(nValChanges.uint8Val, nValChanges.uint8Val + 8); //value data
+
+        ECPVehicleValue requestValue_t;
+        requestValue_t.MsgType = GET_PROPDATA; //E02_Get_MsgType
+        requestValue_t.MsgID = 0x00;           //E02_Get_MsgID
+        requestValue_t.RawData = getVals;      //E02_Get_MsgRawData
+        requestValue_t.length = sizeof(requestValue_t.MsgType) +
+                                sizeof(requestValue_t.MsgID) +
+                                requestValue_t.RawData.size(); //E02_Get_DataLen
+
+        ptrECP->setMcuValue(requestValue_t);
     }
 }
 
@@ -84,6 +97,12 @@ void CoreMsgHandler::Run()
 {
     std::thread msgRecieveTh(std::bind(&CoreMsgHandler::MsgReciever, this));
     msgRecieveTh.detach();
+
+    /* 初始化ACC状态 */
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    uint32_t uiMsgType = MTYPE_ACTION;
+    uint32_t uiMsgId = MTYPE_ACTION_MSGID_KEY;
+    this->E02_Request(uiMsgType, uiMsgId);
 
     InfoPrint("RUN......\n");
     while (1)
@@ -115,20 +134,247 @@ void CoreMsgHandler::MqttMsgProcessor(MsgData msgData)
         std::string strMsg = msgData.strMsg;
         if (!strMsg.empty() && strMsg.length() == 4)
         {
-            typeInt2Chars nValChanges;
-            nValChanges.int32Val[0] = strtol(strMsg.substr(0, 2).c_str(), 0, 10);    //B3CC MsgType
-            nValChanges.int32Val[1] = strtol(strMsg.substr(2, 2).c_str(), 0, 10);    //B3CC MsgID
-            vector<uint8_t> getVals(nValChanges.uint8Val, nValChanges.uint8Val + 8); //value data
+            uint32_t uiMsgType = strtol(strMsg.substr(0, 2).c_str(), 0, 10);
+            uint32_t uiMsgId = strtol(strMsg.substr(2, 2).c_str(), 0, 10);
 
-            ECPVehicleValue requestValue_t;
-            requestValue_t.MsgType = GET_PROPDATA; //E02_Get_MsgType
-            requestValue_t.MsgID = 0x00;           //E02_Get_MsgID
-            requestValue_t.RawData = getVals;      //E02_Get_MsgRawData
-            requestValue_t.length = sizeof(requestValue_t.MsgType) +
-                                    sizeof(requestValue_t.MsgID) +
-                                    requestValue_t.RawData.size(); //E02_Get_DataLen
-            this->E02_Request(requestValue_t);
+            ProcessHMIRequest(uiMsgType, uiMsgId);
         }
+    }
+}
+
+void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
+{
+    switch (uiMsgType)
+    {
+    case HMI_MSG_TYPE_WARNING:
+    {
+        switch (uiMsgId)
+        {
+        case HMI_MGS_WARNING_ID_GET:
+        {
+            this->SendViewPageInfo("get_curr_warn", "get_curr_warn", "ON");
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_DOOR_WARNING);
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_FAULT);
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_ALARM);
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_PEPS);
+        }
+        break;
+        case HMI_MGS_WARNING_ID_TIRE_PRESS:
+        {
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_EXTERNEL_TIRE_PRESSURE);
+        }
+        break;
+        case HMI_MGS_WARNING_ID_TIRE_PRESS_WARN:
+        {
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_ALARM_TIRE);
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_EXTERNEL_TIRE_FAULT);
+        }
+        break;
+        case HMI_MGS_WARNING_ID_TIRE_TEMP:
+        {
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_EXTERNEL_TIRE_TEMPERATURE);
+        }
+        break;
+        default:
+            break;
+        }
+    }
+    break;
+    case HMI_MSG_TYPE_NAVI:
+    {
+        IPCData ipcData;
+        switch (uiMsgId)
+        {
+        case HMI_MGS_INTER_ID_MUSIC_CLEAR:
+        {
+            /* 多媒体音乐状态 05 05 01 00 */
+            ipcData.m_msgType = HMI_MSG_TYPE_NAVI;          //B3CC MsgType
+            ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_CLEAR; //B3CC MsgId
+            ipcData.m_msgLength = 0x01;                     //B3CC DataLength
+            ipcData.m_msgData[0] = m_vehicleWorkData_t.navigationInfo_t.musicStatus;
+        }
+        break;
+        case HMI_MGS_INTER_ID_MUSIC_POSITION:
+        {
+            /* 多媒体音乐进度 05 06 XX YY...ZZ */
+            ipcData.m_msgType = HMI_MSG_TYPE_NAVI;                                           //B3CC MsgType
+            ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_POSITION;                               //B3CC MsgId
+            ipcData.m_msgLength = sizeof(m_vehicleWorkData_t.navigationInfo_t.musicProcess); //B3CC DataLength
+            memcpy(ipcData.m_msgData,
+                   m_vehicleWorkData_t.navigationInfo_t.musicProcess,
+                   sizeof(m_vehicleWorkData_t.navigationInfo_t.musicProcess));
+        }
+        break;
+        case HMI_MGS_INTER_ID_MUSIC_ALBUM:
+        {
+            /* 多媒体音乐专辑 05 07 XX YY...ZZ */
+            ipcData.m_msgType = HMI_MSG_TYPE_NAVI;                                        //B3CC MsgType
+            ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_ALBUM;                               //B3CC MsgId
+            ipcData.m_msgLength = sizeof(m_vehicleWorkData_t.navigationInfo_t.albumName); //B3CC DataLength
+            memcpy(ipcData.m_msgData,
+                   m_vehicleWorkData_t.navigationInfo_t.albumName,
+                   sizeof(m_vehicleWorkData_t.navigationInfo_t.albumName));
+        }
+        break;
+        case HMI_MGS_INTER_ID_MUSIC_TITLE:
+        {
+            /* 多媒体音乐名称 05 08 XX YY...ZZ */
+            ipcData.m_msgType = HMI_MSG_TYPE_NAVI;                                        //B3CC MsgType
+            ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_TITLE;                               //B3CC MsgId
+            ipcData.m_msgLength = sizeof(m_vehicleWorkData_t.navigationInfo_t.musicName); //B3CC DataLength
+            memcpy(ipcData.m_msgData,
+                   m_vehicleWorkData_t.navigationInfo_t.musicName,
+                   sizeof(m_vehicleWorkData_t.navigationInfo_t.musicName));
+        }
+        break;
+        case HMI_MGS_INTER_ID_MUSIC_ARTIST:
+        {
+            /* 多媒体音乐歌手名称 05 09 XX YY...ZZ */
+            ipcData.m_msgType = HMI_MSG_TYPE_NAVI;                                         //B3CC MsgType
+            ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_ARTIST;                               //B3CC MsgId
+            ipcData.m_msgLength = sizeof(m_vehicleWorkData_t.navigationInfo_t.authorName); //B3CC DataLength
+            memcpy(ipcData.m_msgData,
+                   m_vehicleWorkData_t.navigationInfo_t.authorName,
+                   sizeof(m_vehicleWorkData_t.navigationInfo_t.authorName));
+        }
+        break;
+        default:
+            break;
+        }
+
+        if (ipcData.m_msgType != 0x00)
+        {
+            std::string strMsgType = HexToStr(ipcData.m_msgType);
+            std::string strMsgId = HexToStr(ipcData.m_msgID);
+            std::string strMsgLen = HexToStr(ipcData.m_msgLength);
+
+            std::string strMsgSend = strMsgType + strMsgId + strMsgLen + UCharArrToStr(ipcData.m_msgData, ipcData.m_msgLength);
+            m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_MW_TO_HMI), strMsgSend);
+        }
+    }
+    break;
+    case HMI_MGS_TYPE_ODO:
+    {
+        switch (uiMsgId)
+        {
+        case HMI_MGS_ODO_ID_GEAR:
+        {
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_GEAR_BOX);
+        }
+        break;
+        case HMI_MGS_ODO_ID_ODO:
+        {
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_TOTAL_MILEAGE);
+        }
+        break;
+        case HMI_MGS_ODO_ID_TRIP_A:
+        {
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_SUBTOTAL_MILEAGE);
+        }
+        break;
+        case HMI_MGS_ODO_ID_OUTSIDE_TEMPERATURE:
+        {
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_EXTERNEL_TEMPERATURE);
+        }
+        break;
+        default:
+            break;
+        }
+    }
+    break;
+    case HMI_MGS_TYPE_GUAGE:
+    {
+        switch (uiMsgId)
+        {
+        case HMI_MGS_GUAGE_ID_SPEED:
+        case HMI_MGS_GUAGE_ID_RPM:
+        {
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_SPEED_AND_RPM);
+        }
+        break;
+        case HMI_MGS_GUAGE_ID_COOLANT_TEMPERATURE:
+        {
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_COOLAND_TEMPERATURE);
+        }
+        break;
+        case HMI_MGS_GUAGE_ID_FUEL:
+        {
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_FULE_TRAVLE);
+        }
+        break;
+        default:
+            break;
+        }
+    }
+    break;
+    case HMI_MSG_TYPE_TELLTALE:
+    {
+        switch (uiMsgId)
+        {
+        case HMI_MGS_TELLTALE_WARNING:
+        {
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_ALARM);
+        }
+        break;
+        case HMI_MGS_TELLTALE_TURN_SIGNAL:
+        {
+            this->E02_Request(MTYPE_ACTION, MTYPE_DATA_MSGID_COOLAND_TEMPERATURE);
+        }
+        break;
+        default:
+            break;
+        }
+    }
+    break;
+    case HMI_MSG_TYPE_SETTING:
+    {
+        switch (uiMsgId)
+        {
+        case HMI_MGS_SET_ID_HMISTATUS:
+        {
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_KEY);
+        }
+        break;
+        default:
+            break;
+        }
+    }
+    break;
+    case HMI_MSG_TYPE_ECU:
+    {
+        switch (uiMsgId)
+        {
+        case HMI_MGS_ECU_ID_INS_FUEL:
+        {
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_INTANT_FUEL);
+        }
+        break;
+        case HMI_MGS_ECU_ID_AVE_FUEL:
+        {
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_AVERAGE_FUEL);
+        }
+        break;
+        case HMI_MGS_ECU_ID_ENDURANCE:
+        {
+            this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_ENDURANCE_MILEAGE);
+        }
+        break;
+        default:
+            break;
+        }
+    }
+    break;
+    case HMI_MSG_TYPE_SETUP:
+    case HMI_MSG_TYPE_KEY:
+    case HMI_MSG_TYPE_DEBUG:
+    case HMI_MSG_TYPE_FAULT:
+    case HMI_MSG_TYPE_EOL:
+    {
+        // this->E02_Request(uiMsgType, uiMsgId);
+    }
+    break;
+    default:
+        break;
     }
 }
 
@@ -190,50 +436,70 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
     {
         int iValueLow = std::strtol(HexToStr(ucMsgData[0]).c_str(), 0, 16);
         unsigned char ucLightSignalValueLow = iValueLow & 0xFF;
+
+        unsigned char uchTurnLeftLightOld = m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.turnLeftLight;
+        unsigned char uchTurnLeftLightNew = GET_BIT(ucLightSignalValueLow, 0);
+
+        unsigned char uchTurnRightLightOld = m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.turnRightLight;
+        unsigned char uchTurnRightLightNew = GET_BIT(ucLightSignalValueLow, 1);
+
+        unsigned char uchDangerLightOld = m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.dangerLight;
+        unsigned char uchDangerLightNew = uchTurnLeftLightNew && uchTurnRightLightNew;
+
         memcpy(&m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t,
                &ucLightSignalValueLow,
                sizeof(m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t));
 
-        m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.dangerLight =
-            (m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.turnLeftLight & 0x01) &&
-            (m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.turnRightLight & 0x01);
-
-        char chMsgByte1Buff[4] = {0};
-        HexToStr(chMsgByte1Buff, &ucLightSignalValueLow, sizeof(ucLightSignalValueLow));
-
-        if (iDataLen > 1)
+        if (uchDangerLightOld != uchDangerLightNew)
         {
-            int iValueHigh = std::strtol(HexToStr(ucMsgData[1]).c_str(), 0, 16);
-            unsigned char ucLightSignalValueHigh = iValueHigh & 0xFF;
-            memcpy(&m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte2_t,
-                   &ucLightSignalValueHigh,
-                   sizeof(m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte2_t));
+            if (uchDangerLightNew == 0x01)
+            {
+                // this->SendAudioWarnInfo("turn_off", "OFF");
+                this->SendAudioWarnInfo("turn_on", "ON");
+            }
+            else
+            {
+                // this->SendAudioWarnInfo("turn_on", "OFF");
+                this->SendAudioWarnInfo("turn_off", "ON");
+            }
+
+            m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.dangerLight = uchDangerLightNew;
+        }
+        else if (m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.dangerLight == 0x00)
+        {
+            static bool isTurnLightStart = false;
+            if (uchTurnLeftLightOld != uchTurnLeftLightNew ||
+                uchTurnRightLightOld != uchTurnRightLightNew)
+            {
+                if (uchTurnLeftLightNew == 0x01 || uchTurnRightLightNew == 0x01)
+                {
+                    isTurnLightStart = true;
+                    // this->SendAudioWarnInfo("turn_off", "OFF");
+                    this->SendAudioWarnInfo("turn_on", "ON");
+                }
+                else if ((uchTurnLeftLightNew == 0x00 || uchTurnRightLightNew == 0x00) &&
+                         isTurnLightStart)
+                {
+                    isTurnLightStart = true;
+                    // this->SendAudioWarnInfo("turn_on", "OFF");
+                    this->SendAudioWarnInfo("turn_off", "ON");
+                }
+            }
+            else if (isTurnLightStart)
+            {
+                isTurnLightStart = false;
+                // this->SendAudioWarnInfo("turn_on", "OFF");
+                // this->SendAudioWarnInfo("turn_off", "OFF");
+            }
         }
 
-        /* 左右转向灯 03 02 02 0101 */
+        /* 危险灯 03 01 07 00000000000000 左右转向灯 03 02 02 0101 */
         ipcData.m_msgType = HMI_MSG_TYPE_TELLTALE;      //B3CC MsgType
         ipcData.m_msgID = HMI_MGS_TELLTALE_TURN_SIGNAL; //B3CC MsgId
         ipcData.m_msgLength = 0x02;                     //B3CC DataLength
         memcpy(ipcData.m_msgData,
                &m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t,
                sizeof(m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t)); //B3CC MsgData Byte[1]
-        memcpy(&ipcData.m_msgData[1],
-               &m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte2_t,
-               sizeof(m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte2_t)); //B3CC MsgData Byte[2]
-
-        if (m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.dangerLight == 0x00)
-        {
-            if (m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.turnLeftLight & 0x01 ||
-                m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.turnRightLight & 0x01)
-            {
-                this->SendAudioWarnInfo("turn_on", "ON");
-            }
-            else
-            {
-                /* 会有BUG:任意触发车灯状态都会报 */
-                this->SendAudioWarnInfo("turn_off", "ON");
-            }
-        }
     }
     break;
     /* 车门状态 */
@@ -717,6 +983,59 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
                 m_vehicleWorkData_t.warnInfo_t.over_speed_t.overSpeed = 0x00;
                 m_vehicleWorkData_t.faultInfo_t.faultOverSpeed = 0x00;
                 this->SendFaultInfo();
+            }
+        }
+
+        std::string strOldWarnViewName;
+        std::string strNewWarnViewName;
+        if (fSpeed > g_fSppedDoorOpenWarn)
+        {
+            strOldWarnViewName = "doorinfo";
+            strNewWarnViewName = "doorwarn";
+        }
+        else
+        {
+            strOldWarnViewName = "doorwarn";
+            strNewWarnViewName = "doorinfo";
+        }
+
+        if (m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte3_t.doorOpenLight)
+        {
+            /* 对门开报警、门开提示在不同车速情况下进行报警逻辑的交换处理 */
+            if (m_vehicleWorkData_t.warnInfo_t.door_info_t.frontLeftDoor)
+            {
+                this->SendViewPageInfo(strOldWarnViewName, "DRIVER_DOOR", "OFF");
+                this->SendViewPageInfo(strNewWarnViewName, "DRIVER_DOOR", "ON");
+            }
+
+            if (m_vehicleWorkData_t.warnInfo_t.door_info_t.frontRightDoor)
+            {
+                this->SendViewPageInfo(strOldWarnViewName, "PASSENGER_DOOR", "OFF");
+                this->SendViewPageInfo(strNewWarnViewName, "PASSENGER_DOOR", "ON");
+            }
+
+            if (m_vehicleWorkData_t.warnInfo_t.door_info_t.rearRightDoor)
+            {
+                this->SendViewPageInfo(strOldWarnViewName, "REAR_RIGHT_DOOR", "OFF");
+                this->SendViewPageInfo(strNewWarnViewName, "REAR_RIGHT_DOOR", "ON");
+            }
+
+            if (m_vehicleWorkData_t.warnInfo_t.door_info_t.rearLeftDoor)
+            {
+                this->SendViewPageInfo(strOldWarnViewName, "REAR_LEFT_DOOR", "OFF");
+                this->SendViewPageInfo(strNewWarnViewName, "REAR_LEFT_DOOR", "ON");
+            }
+
+            if (m_vehicleWorkData_t.warnInfo_t.door_info_t.hood)
+            {
+                this->SendViewPageInfo(strOldWarnViewName, "HOOD", "OFF");
+                this->SendViewPageInfo(strNewWarnViewName, "HOOD", "ON");
+            }
+
+            if (m_vehicleWorkData_t.warnInfo_t.door_info_t.trunk)
+            {
+                this->SendViewPageInfo(strOldWarnViewName, "BACK_DOOR", "OFF");
+                this->SendViewPageInfo(strNewWarnViewName, "BACK_DOOR", "ON");
             }
         }
     }
@@ -1332,6 +1651,8 @@ void CoreMsgHandler::InteractiveMsgHandler(uint32_t uiMsgId, const unsigned char
             ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_CLEAR; //B3CC MsgId
             ipcData.m_msgLength = 0x01;                     //B3CC DataLength
             ipcData.m_msgData[0] = 0x00;
+
+            m_vehicleWorkData_t.navigationInfo_t.musicStatus = 0x00;
         }
         break;
         case MUSIC_PROCESS:
@@ -1341,6 +1662,10 @@ void CoreMsgHandler::InteractiveMsgHandler(uint32_t uiMsgId, const unsigned char
             ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_POSITION; //B3CC MsgId
             ipcData.m_msgLength = iDataLen - 1;                //B3CC DataLength
             memcpy(ipcData.m_msgData, &ucMsgData[1], iDataLen - 1);
+
+            m_vehicleWorkData_t.navigationInfo_t.musicStatus = 0x01;
+            memset(m_vehicleWorkData_t.navigationInfo_t.musicProcess, 0, sizeof(m_vehicleWorkData_t.navigationInfo_t.musicProcess));
+            memcpy(m_vehicleWorkData_t.navigationInfo_t.musicProcess, &ucMsgData[1], iDataLen - 1);
         }
         break;
         case MUSIC_ALBUM:
@@ -1350,6 +1675,9 @@ void CoreMsgHandler::InteractiveMsgHandler(uint32_t uiMsgId, const unsigned char
             ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_ALBUM; //B3CC MsgId
             ipcData.m_msgLength = iDataLen - 1;             //B3CC DataLength
             memcpy(ipcData.m_msgData, &ucMsgData[1], iDataLen - 1);
+
+            memset(m_vehicleWorkData_t.navigationInfo_t.albumName, 0, sizeof(m_vehicleWorkData_t.navigationInfo_t.albumName));
+            memcpy(m_vehicleWorkData_t.navigationInfo_t.albumName, &ucMsgData[1], iDataLen - 1);
         }
         break;
         case MUSIC_NAME:
@@ -1359,6 +1687,9 @@ void CoreMsgHandler::InteractiveMsgHandler(uint32_t uiMsgId, const unsigned char
             ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_TITLE; //B3CC MsgId
             ipcData.m_msgLength = iDataLen - 1;             //B3CC DataLength
             memcpy(ipcData.m_msgData, &ucMsgData[1], iDataLen - 1);
+
+            memset(m_vehicleWorkData_t.navigationInfo_t.musicName, 0, sizeof(m_vehicleWorkData_t.navigationInfo_t.musicName));
+            memcpy(m_vehicleWorkData_t.navigationInfo_t.musicName, &ucMsgData[1], iDataLen - 1);
         }
         break;
         case MUSIC_AUTHOR:
@@ -1368,6 +1699,9 @@ void CoreMsgHandler::InteractiveMsgHandler(uint32_t uiMsgId, const unsigned char
             ipcData.m_msgID = HMI_MGS_INTER_ID_MUSIC_ARTIST; //B3CC MsgId
             ipcData.m_msgLength = iDataLen - 1;              //B3CC DataLength
             memcpy(ipcData.m_msgData, &ucMsgData[1], iDataLen - 1);
+
+            memset(m_vehicleWorkData_t.navigationInfo_t.authorName, 0, sizeof(m_vehicleWorkData_t.navigationInfo_t.authorName));
+            memcpy(m_vehicleWorkData_t.navigationInfo_t.authorName, &ucMsgData[1], iDataLen - 1);
         }
         break;
         default:
@@ -1548,6 +1882,12 @@ void CoreMsgHandler::SendFaultInfo()
     m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_MW_TO_HMI), strMsgSend);
 }
 
+void CoreMsgHandler::MWBroadcastAccStatus(VehicleAccStatus accStatus)
+{
+    std::string strStatus = (accStatus == VEHICLE_OFF) ? "OFF" : "ON";
+    this->SendViewPageInfo("ACC", "ACC", strStatus);
+}
+
 void CoreMsgHandler::ExecPowerEvent(VehicleAccStatus accStatus)
 {
     if (accStatus == VEHICLE_OFF)
@@ -1558,6 +1898,8 @@ void CoreMsgHandler::ExecPowerEvent(VehicleAccStatus accStatus)
     {
         acquire_event();
     }
+
+    MWBroadcastAccStatus(accStatus);
 }
 
 static void ReadCallBackFunc(const ECPVehicleValue &rData)

@@ -47,7 +47,7 @@ public:
 
     void E02_MsgReciever(ECPVehicleValue rData);
 
-    void E02_Request(ECPVehicleValue requestValue);
+    void E02_Request(uint32_t uiMsgType, uint32_t uiMsgId);
 
 private:
     void Run();
@@ -55,6 +55,8 @@ private:
     void MsgReciever();
 
     void MqttMsgProcessor(MsgData msgData);
+
+    void ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId);
 
     void ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
@@ -85,6 +87,7 @@ private:
     void SendAudioWarnInfo(std::string strAudioName, std::string strStatus);
     void SendFaultInfo();
 
+    void MWBroadcastAccStatus(VehicleAccStatus accStatus);
     void ExecPowerEvent(VehicleAccStatus accStatus);
 };
 

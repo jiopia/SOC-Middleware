@@ -21,7 +21,7 @@ remark：备注
 	<audio name="overspeed"					chime_id="warning.wav" freq="1HZ" priority="10" power="wm1" loop="3" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="超速报警"/>
 	<audio name="coolandtemperaturehigh"	chime_id="warning.wav" freq="1HZ" priority="11" power="wm1" loop="-1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="水温高报警"/>
 	<audio name="tirewarning" 			 	chime_id="warning.wav" freq="1HZ" priority="12" power="wm1" loop="-1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="胎压系统报警"/>
-	<audio name="turn_on" 				 	chime_id="tick.wav" freq="1HZ" priority="13" power="wm1" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="左右转向灯ON"/>
-	<audio name="turn_off" 				 	chime_id="tock.wav" freq="1HZ" priority="13" power="wm1" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="左右转向灯OFF"/>
+	<audio name="turn_on" 				 	chime_id="tick.wav" freq="2HZ" priority="13" power="wm1" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="左右转向灯ON"/>
+	<audio name="turn_off" 				 	chime_id="tock.wav" freq="2HZ" priority="13" power="wm1" loop="1" playmode="replay" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="左右转向灯OFF"/>
 	<!-- ===================================================================================================================================================================================================================== -->
 </audiotype>

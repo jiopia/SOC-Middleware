@@ -110,4 +110,5 @@ void SoudPlay::AudioPlayThread(std::string filename, int iLoop, std::string strF
 	}
 
 	m_isAudioPlayThExit = true;
+	SetAudioPlayThreadStatus(AUDIO_STOP);
 }

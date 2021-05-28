@@ -7,6 +7,8 @@ bool g_debugFlag = true;
 
 int main(int argc, char *argv[])
 {
+	InfoPrint("Module[%s] compiled time:%s %s\n", strComponentName.c_str(), __DATE__, __TIME__);
+
 	CoreMsgHandler::GetInstance()->Start();
 
 	while (1)

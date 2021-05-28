@@ -43,18 +43,46 @@ MsgHandler::~MsgHandler()
  */
 void MsgHandler::SetWarnView(std::string strViewName, std::string strExtraInfo, VIEW_STATUS viewStatus)
 {
-    ViewInfoPtr viewInfo = m_xmlManager->GetViewInfo(strViewName);
-    if (viewInfo == NULL)
+    if (strViewName.compare("ACC") == 0)
     {
-        ErrPrint("Can NOT find ViewInfo which viewname is [%s]!\n", strViewName.c_str());
-        return;
+        std::lock_guard<std::mutex> lockGuard(m_mtxAccStatus);
+        VehicleAccStatus tempStatus = (viewStatus == VIEW_OFF) ? VEHICLE_OFF : VEHICLE_ON;
+        if (m_vehicleStatus != tempStatus)
+        {
+            m_vehicleStatus = tempStatus;
+        }
     }
+    else if (strViewName.compare("get_curr_warn") == 0)
+    {
+        std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
+        ViewInfoPtr pViewInfo = m_xmlManager->GetViewInfo(m_currViewNode.strViewName);
+        if (pViewInfo == NULL)
+        {
+            return;
+        }
 
-    InfoPrint("DEBUG -- View[%s], Extra[%s], Status[%s].\n",
-              strViewName.c_str(), strExtraInfo.c_str(), viewStatus == VIEW_ON ? "ON" : "OFF");
+        ResetAtLeastFlag();
+        AtLeastTimerStart(); //1.5秒最短显示计时开始
+        Actuator::GetInstance()->WarnShowTimerStop();
+        int iLoopTime = pViewInfo->GetLoop();
+        Actuator::GetInstance()->WarnShowTimerStart(iLoopTime);
+        Notify(m_currViewNode);
+    }
+    else
+    {
+        ViewInfoPtr viewInfo = m_xmlManager->GetViewInfo(strViewName);
+        if (viewInfo == NULL)
+        {
+            ErrPrint("Can NOT find ViewInfo which viewname is [%s]!\n", strViewName.c_str());
+            return;
+        }
 
-    ViewNode viewNode(strViewName, strExtraInfo, viewStatus);
-    UpdateWarnViewNode(viewNode);
+        InfoPrint("DEBUG -- View[%s], Extra[%s], Status[%s].\n",
+                  strViewName.c_str(), strExtraInfo.c_str(), viewStatus == VIEW_ON ? "ON" : "OFF");
+
+        ViewNode viewNode(strViewName, strExtraInfo, viewStatus);
+        UpdateWarnViewNode(viewNode);
+    }
 }
 
 /** 
@@ -232,6 +260,11 @@ void MsgHandler::Notify(ViewNode &viewNode)
         return;
     }
 
+    if (!CheckAccStatusConform(pViewInfo))
+    {
+        return;
+    }
+
     if (!pViewInfo->GetAudioBindInfo().empty())
     {
         m_audioControl->SendAudio("warning",
@@ -389,8 +422,9 @@ void MsgHandler::UpdateSeriousWarnList(ViewNode viewNode)
                 tempNode->UpdateViewStatus();
             }
         }
-        else /* 新报警信息(插入) */
+        else if (viewNode.viewStatus == VIEW_ON)
         {
+            /* 新报警信息(插入) */
             if (viewNode.strViewName == "doorwarn")
             {
                 ViewExtraInfo viewExtraInfo(viewNode.strExtraInfo, viewNode.viewStatus);
@@ -482,8 +516,9 @@ void MsgHandler::UpdateFrashWarnList(ViewNode viewNode)
                 }
             }
         }
-        else
+        else if (viewNode.viewStatus == VIEW_ON)
         {
+            /* 新报警信息(插入) */
             ViewExtraInfo viewExtraInfo(viewNode.strExtraInfo, viewNode.viewStatus);
             viewNode.strExtraInfo = viewNode.strViewName;
             viewNode.extraInfos.emplace_back(viewExtraInfo);
@@ -944,4 +979,27 @@ std::string MsgHandler::GetDoorInfoFlagStr(ViewNode viewNode)
     }
 
     return strDoorFlags;
+}
+
+bool MsgHandler::CheckAccStatusConform(std::shared_ptr<ViewInfo> pViewInfo)
+{
+    bool isConform = false;
+    std::string strPower = pViewInfo->GetPower();
+    std::lock_guard<std::mutex> lockGuard(m_mtxAccStatus);
+    if (m_vehicleStatus == VEHICLE_ON)
+    {
+        if (strPower.compare("wm1") == 0 || strPower.compare("wm12") == 0)
+        {
+            isConform = true;
+        }
+    }
+    else if (m_vehicleStatus == VEHICLE_OFF)
+    {
+        if (strPower.compare("wm2") == 0 || strPower.compare("wm12") == 0)
+        {
+            isConform = true;
+        }
+    }
+
+    return isConform;
 }

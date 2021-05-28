@@ -147,6 +147,7 @@ enum HMI_MGS_KEY_ID
 
 enum HMI_MGS_WARNING_ID
 {
+    HMI_MGS_WARNING_ID_GET = 0x00,
     HMI_MGS_WARNING_ID_OVERSPEED = 0x01,       //超速报警
     HMI_MGS_WARNING_ID_DOOR = 0x02,            //门开警告
     HMI_MGS_WARNING_ID_NOWARN = 0x03,          //
@@ -385,19 +386,19 @@ typedef struct TelltaleData
         /************  Byte1 *************/
         struct Byte1
         {
-            unsigned char turnLeftLight : 1;
-            unsigned char turnRightLight : 1;
-            unsigned char dangerLight : 1;
-            unsigned char positionLight : 1;
-            unsigned char highBeamLight : 1;
-            unsigned char lowBeamLight : 1;
-            unsigned char frontFogLight : 1;
-            unsigned char backFogLight : 1;
+            unsigned char turnLeftLight : 1;  //左转向灯
+            unsigned char turnRightLight : 1; //右转向灯
+            unsigned char dangerLight : 1;    //危险灯
+            unsigned char positionLight : 1;  //位置灯
+            unsigned char highBeamLight : 1;  //远光灯
+            unsigned char lowBeamLight : 1;   //近光灯
+            unsigned char frontFogLight : 1;  //前雾灯
+            unsigned char backFogLight : 1;   //后雾灯
         } byte1_t;
         /************  Byte2 *************/
         struct Byte2
         {
-            unsigned char daytimeRunningLight : 1;
+            unsigned char daytimeRunningLight : 1; //日间行车灯
             unsigned char reserved : 7;
         } byte2_t;
         /*********************************/
@@ -506,14 +507,16 @@ typedef struct SetupInfo
 
 typedef struct NavigationInfo
 {
-    char musicName[60];  //音乐名
-    char authorName[60]; //歌手名
-    char albumName[60];  //专辑名
+    unsigned char musicStatus;      //音乐状态
+    unsigned char musicProcess[20]; //音乐进度
+    unsigned char musicName[60];    //音乐名
+    unsigned char authorName[60];   //歌手名
+    unsigned char albumName[60];    //专辑名
 
-    unsigned char phoneStatus; //电话状态
-    char phoneCallName[60];    //来电名称
-    char phoneCallNumber[60];  //来电号码
-    char phoneCallTime[60];    //通话时间
+    unsigned char phoneStatus;         //电话状态
+    unsigned char phoneCallName[60];   //来电名称
+    unsigned char phoneCallNumber[60]; //来电号码
+    unsigned char phoneCallTime[60];   //通话时间
 } NavigationInfo_t;
 
 typedef struct SettingInfo

@@ -9,6 +9,7 @@
 #include "ViewNode.hpp"
 #include "PriorityQueue.hpp"
 #include "WarnPageControl.hpp"
+#include "MsgDataDefine.h"
 
 #define CURR_HMI_STATUS_MATCH_FAIL_MAX_TIMES 10
 
@@ -73,6 +74,7 @@ private:
     bool IsAtLeastTimeDone();
 
     std::string GetDoorInfoFlagStr(ViewNode viewNode);
+    bool CheckAccStatusConform(std::shared_ptr<ViewInfo> pViewInfo);
     
     timer_t m_timerId;
 
@@ -90,6 +92,9 @@ private:
     std::vector<ViewNode> m_freshViewList; //尚未显示过的非严重告警列表
     std::mutex m_mtxLoop;
     std::vector<ViewNode> m_loopViewList; //循环显示的非严重告警列表
+
+    std::mutex m_mtxAccStatus;
+    VehicleAccStatus m_vehicleStatus = VEHICLE_DEFAULT;
 };
 
 #endif // !_MSG_HANDLER_H_

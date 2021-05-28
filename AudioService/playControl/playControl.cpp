@@ -31,19 +31,46 @@ void PlayControl::loadFile(std::string strFilePath)
 
 void PlayControl::pushSound(std::string strName, SoundSwitch iOnOff)
 {
+	auto iterFind = m_mapConfig.find(strName);
+	if (iterFind == m_mapConfig.end() ||
+		iterFind->second == NULL)
+	{
+		return;
+	}
+
 	pthread_mutex_lock(&m_listSoundLock);
+
+	/* 对转向灯逻辑进行特殊处理 */
+	for (auto iterList = m_listSound.begin(); iterList != m_listSound.end(); iterList++)
+	{
+		if ("turn_on" == strName || "turn_off" == strName)
+		{
+			if (((*iterList)->m_strName != strName) &&
+				((*iterList)->m_strName == "turn_on" || (*iterList)->m_strName == "turn_off"))
+			{
+				(*iterList)->m_soundSwitch = SOUND_OFF;
+			}
+		}
+		else if ((*iterList)->m_strName == "turn_on" || (*iterList)->m_strName == "turn_off")
+		{
+			Sound *pSound = iterFind->second;
+			if (pSound != NULL && pSound->getPriority() < (*iterList)->m_iPriority)
+			{
+				(*iterList)->m_soundSwitch = SOUND_OFF;
+			}
+		}
+	}
+
 	list<Sound *>::iterator iter;
 	for (iter = m_listSound.begin(); iter != m_listSound.end(); iter++)
 	{
 		if ((*iter)->m_strName == strName)
 		{
-			{
-				(*iter)->m_soundSwitch = iOnOff;
-			}
-
+			(*iter)->m_soundSwitch = iOnOff;
 			break;
 		}
 	}
+
 	if (iter == m_listSound.end())
 	{
 		if (SOUND_OFF == iOnOff)
@@ -127,7 +154,7 @@ void PlayControl::printAll(std::string strLog)
 		strAllDialogInfo += (*iter)->m_soundSwitch == 0 ? "OFF" : "ON";
 	}
 
-	InfoPrint("%s\n", strAllDialogInfo.c_str());
+	DebugPrint("%s\n", strAllDialogInfo.c_str());
 	pthread_mutex_unlock(&m_listSoundLock);
 }
 
@@ -170,8 +197,8 @@ void PlayControl::handleNode()
 				{
 					if (m_SoudPlay.GetAudioPlayThreadStatus() == AUDIO_STOP)
 					{
-						m_SoudPlay.playWarning(pSound->getChimeId(), pSound->getLoop(), pSound->getFreq());
-						m_pCurSound = pSound;
+						this->removeOneSound(pSound);
+						m_pCurSound = NULL;
 					}
 				}
 			}
