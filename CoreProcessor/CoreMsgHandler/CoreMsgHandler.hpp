@@ -18,6 +18,7 @@
 extern "C"
 {
 #include "powerct.h"
+#include "ipo_blank.h"
 }
 
 #include <sys/time.h>
@@ -34,8 +35,11 @@ typedef union
     uint8_t uint8Val[CHANGE_INT_NUMS * sizeof(int32Val)];
 } typeInt2Chars;
 
-int acquire_event(void);
-int release_event(void);
+int acquire_event(void); //ACC_ON占用锁资源
+int release_event(void); //ACC_OFF释放锁资源
+
+int set_powernormal_mode(void); //电源唤醒接口
+int set_poweroff_mode(void);    //电源睡眠接口
 
 #endif //!E02
 
@@ -82,6 +86,9 @@ private:
 
     VehicleAccStatus m_vehicleStatus = VEHICLE_DEFAULT;
 
+    std::mutex m_mtxPowerOff;
+    bool m_isPowerOffNeedExec = false;
+
 private:
     void SendViewPageInfo(std::string strViewName, std::string strExtraInfo, std::string strStatus);
     void SendAudioWarnInfo(std::string strAudioName, std::string strStatus);
@@ -89,6 +96,10 @@ private:
 
     void MWBroadcastAccStatus(VehicleAccStatus accStatus);
     void ExecPowerEvent(VehicleAccStatus accStatus);
+
+    void SetPowerOffExecValid(bool isNeedExec);
+    bool IsPowerOffNeedExec();
+    void PowerOffTimerThread();
 };
 
 #endif //!_CORE_MSG_HANDLER_H_

@@ -16,10 +16,6 @@ static bool ViewListSortFunction(ViewNode viewNode1, ViewNode viewNode2)
 static std::mutex g_mtxTimeDone;
 static bool g_isAtLeastTimeDone = true;
 
-/* 告警信息是否全部隐藏的标志 */
-static std::mutex g_mtxHideAll;
-static bool g_isAllWarnHidden = false;
-
 MsgHandler::MsgHandler() : m_audioControl(AudioControl::GetInstance()),
                            m_xmlManager(XmlManager::GetInstance()),
                            m_jsonHandler(JsonHandler::GetInstance()),
@@ -52,8 +48,17 @@ void MsgHandler::SetWarnView(std::string strViewName, std::string strExtraInfo, 
             m_vehicleStatus = tempStatus;
         }
     }
+    else if (strViewName.compare("warn_hiden") == 0)
+    {
+        SetAllWarnHidenStatus(true);
+    }
     else if (strViewName.compare("get_curr_warn") == 0)
     {
+        if (GetAllWarnHidenStatus())
+        {
+            return;
+        }
+
         std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
         ViewInfoPtr pViewInfo = m_xmlManager->GetViewInfo(m_currViewNode.strViewName);
         if (pViewInfo == NULL)
@@ -152,7 +157,7 @@ void MsgHandler::Run()
  */
 void MsgHandler::HandleWarnViews()
 {
-    if (g_isAllWarnHidden)
+    if (GetAllWarnHidenStatus())
     {
         InfoPrint("All warning message is Hidden now.\n");
         return;
@@ -238,8 +243,7 @@ void MsgHandler::HideAllWarn()
     WarnPrint("Hide All Warning View Info.\n");
     if (IsAtLeastTimeDone())
     {
-        std::lock_guard<std::mutex> lockGuard(g_mtxHideAll);
-        g_isAllWarnHidden = true;
+        SetAllWarnHidenStatus(true);
     }
 }
 
@@ -260,7 +264,7 @@ void MsgHandler::Notify(ViewNode &viewNode)
         return;
     }
 
-    if (!CheckAccStatusConform(pViewInfo))
+    if (!CheckAccStatusConform(pViewInfo) || GetAllWarnHidenStatus())
     {
         return;
     }
@@ -292,12 +296,11 @@ void MsgHandler::UpdateWarnViewNode(ViewNode viewNode)
         return;
     }
 
-    if (g_isAllWarnHidden &&
+    if (GetAllWarnHidenStatus() &&
         viewNode.viewStatus == VIEW_ON)
     {
         //新报警触发，默认重置“隐藏所有报警”的标志位
-        std::lock_guard<std::mutex> lockGuard(g_mtxHideAll);
-        g_isAllWarnHidden = false;
+        SetAllWarnHidenStatus(false);
     }
 
     if (IsSeriousWarn(viewNode))
@@ -1002,4 +1005,16 @@ bool MsgHandler::CheckAccStatusConform(std::shared_ptr<ViewInfo> pViewInfo)
     }
 
     return isConform;
+}
+
+bool MsgHandler::GetAllWarnHidenStatus()
+{
+    std::lock_guard<std::mutex> lockGuard(m_mtxHideAll);
+    return m_isAllWarnHidden;
+}
+
+void MsgHandler::SetAllWarnHidenStatus(bool status)
+{
+    std::lock_guard<std::mutex> lockGuard(m_mtxHideAll);
+    m_isAllWarnHidden = status;
 }

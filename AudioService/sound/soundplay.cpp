@@ -74,6 +74,18 @@ void SoudPlay::SetAudioPlayThreadStatus(AudioPlayStatus status)
 	m_audioPlayStatus = status;
 }
 
+void SoudPlay::UpdataVehicalAccStatus(SoundSwitch status)
+{
+	std::lock_guard<std::mutex> lockGuard(m_mtxAccStatus);
+	m_vehicleStatus = (status == SOUND_OFF) ? VEHICLE_OFF : VEHICLE_ON;
+}
+
+VehicleAccStatus SoudPlay::GetVehicalAccStatus()
+{
+	std::lock_guard<std::mutex> lockGuard(m_mtxAccStatus);
+	return m_vehicleStatus;
+}
+
 void SoudPlay::AudioPlayThread(std::string filename, int iLoop, std::string strFreq)
 {
 	CriticalPrint("Thread Id:[%lu]\n", std::hash<std::thread::id>()(std::this_thread::get_id()));

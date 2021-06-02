@@ -159,6 +159,11 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
             this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_PEPS);
         }
         break;
+        case HMI_MGS_WARNING_ID_NOWARN:
+        {
+            this->SendViewPageInfo("warn_hiden", "warn_hiden", "ON");
+        }
+        break;
         case HMI_MGS_WARNING_ID_TIRE_PRESS:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_EXTERNEL_TIRE_PRESSURE);
@@ -313,12 +318,18 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
         {
         case HMI_MGS_TELLTALE_WARNING:
         {
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_FAULT);
             this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_ALARM);
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_EPB);
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_PEPS);
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_AIRBAG);
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_LANE_DEPATURE);
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_OILLOW);
         }
         break;
         case HMI_MGS_TELLTALE_TURN_SIGNAL:
         {
-            this->E02_Request(MTYPE_ACTION, MTYPE_DATA_MSGID_COOLAND_TEMPERATURE);
+            this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_CAR_LIGHT);
         }
         break;
         default:
@@ -394,20 +405,21 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
             return;
         }
 
-        int ignStatus = std::strtol(HexToStr(ucMsgData[0]).c_str(), 0, 16);
+        int ignStatusTemp = std::strtol(HexToStr(ucMsgData[0]).c_str(), 0, 16);
+        unsigned char ignStatus = ignStatusTemp & 0x0F;
         VehicleAccStatus tempVehicleStatus = VEHICLE_DEFAULT;
         switch (ignStatus)
         {
-        case 0x10:
+        case 0x00:
             tempVehicleStatus = VEHICLE_OFF;
             break;
-        case 0x11:
+        case 0x01:
             tempVehicleStatus = VEHICLE_ACC;
             break;
-        case 0x12:
+        case 0x02:
             tempVehicleStatus = VEHICLE_ON;
             break;
-        case 0x13:
+        case 0x03:
             tempVehicleStatus = VEHICLE_START;
             break;
         default:
@@ -422,12 +434,14 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
 
             ExecPowerEvent(tempVehicleStatus);
 
-            unsigned char ignStatus = (m_vehicleStatus == VEHICLE_OFF) ? 0x00 : 0x01;
+            unsigned char uchIgnStatus = (m_vehicleStatus == VEHICLE_OFF) ? 0x00 : 0x01;
             /* IGN状态 08 02 01 01 */
             ipcData.m_msgType = HMI_MSG_TYPE_SETUP;        //B3CC MsgType
             ipcData.m_msgID = HMI_MGS_SETUP_ID_IGN_STATUS; //B3CC MsgId
             ipcData.m_msgLength = 0x01;                    //B3CC DataLength
-            ipcData.m_msgData[0] = ignStatus;
+            ipcData.m_msgData[0] = uchIgnStatus;
+
+            printf("\nSend IGN Status:[0x%02X] to HMI.\n", uchIgnStatus);
         }
     }
     break;
@@ -1886,20 +1900,57 @@ void CoreMsgHandler::MWBroadcastAccStatus(VehicleAccStatus accStatus)
 {
     std::string strStatus = (accStatus == VEHICLE_OFF) ? "OFF" : "ON";
     this->SendViewPageInfo("ACC", "ACC", strStatus);
+    this->SendAudioWarnInfo("ACC", strStatus);
 }
 
 void CoreMsgHandler::ExecPowerEvent(VehicleAccStatus accStatus)
 {
+    /*
+        set_powernormal_mode 这个在acquire_event之后调用
+        set_poweroff_mode 这个在release_event之前调用
+    */
     if (accStatus == VEHICLE_OFF)
     {
-        release_event();
+        SetPowerOffExecValid(true);
+        std::thread poweroffTh(std::bind(&CoreMsgHandler::PowerOffTimerThread, this));
+        poweroffTh.detach();
     }
     else
     {
+        SetPowerOffExecValid(false);
         acquire_event();
+        set_powernormal_mode();
     }
 
     MWBroadcastAccStatus(accStatus);
+}
+
+void CoreMsgHandler::SetPowerOffExecValid(bool isNeedExec)
+{
+    std::lock_guard<std::mutex> lockGuard(m_mtxPowerOff);
+    m_isPowerOffNeedExec = isNeedExec;
+}
+
+bool CoreMsgHandler::IsPowerOffNeedExec()
+{
+    std::lock_guard<std::mutex> lockGuard(m_mtxPowerOff);
+    return m_isPowerOffNeedExec;
+}
+
+void CoreMsgHandler::PowerOffTimerThread()
+{
+    static int iTimers = 0;
+    while (IsPowerOffNeedExec())
+    {
+        if (iTimers++ == 150)
+        {
+            set_poweroff_mode();
+            release_event();
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    iTimers = 0;
 }
 
 static void ReadCallBackFunc(const ECPVehicleValue &rData)

@@ -31,6 +31,11 @@ void PlayControl::loadFile(std::string strFilePath)
 
 void PlayControl::pushSound(std::string strName, SoundSwitch iOnOff)
 {
+	if (strName == "ACC")
+	{
+		UpdataVehicalAccStatus(iOnOff) return;
+	}
+
 	auto iterFind = m_mapConfig.find(strName);
 	if (iterFind == m_mapConfig.end() ||
 		iterFind->second == NULL)
@@ -109,18 +114,25 @@ void PlayControl::getOneSound(Sound *&pSound)
 	pthread_mutex_lock(&m_listSoundLock);
 	if (!m_listSound.empty())
 	{
-
-		// for (list<Sound *>::iterator iter = m_listSound.begin(); iter != m_listSound.end(); iter++)
-		// {
-		// 	if ("wm1" == (*iter)->getPowerMode() ||
-		// 		"wm2" == (*iter)->getPowerMode() ||
-		// 		"wm12" == (*iter)->getPowerMode())
-		// 	{
-		// 		pSound = (*iter);
-		// 		break;
-		// 	}
-		// }
-		pSound = m_listSound.front();
+		for (list<Sound *>::iterator iter = m_listSound.begin(); iter != m_listSound.end(); iter++)
+		{
+			if (m_SoudPlay.GetVehicalAccStatus() == VEHICLE_ON)
+			{
+				if ("wm1" == (*iter)->getPowerMode() || "wm12" == (*iter)->getPowerMode())
+				{
+					pSound = (*iter);
+					break;
+				}
+			}
+			else if (m_SoudPlay.GetVehicalAccStatus() == VEHICLE_OFF)
+			{
+				if ("wm2" == (*iter)->getPowerMode() || "wm12" == (*iter)->getPowerMode())
+				{
+					pSound = (*iter);
+					break;
+				}
+			}
+		}
 	}
 	pthread_mutex_unlock(&m_listSoundLock);
 }

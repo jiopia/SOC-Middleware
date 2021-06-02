@@ -52,7 +52,7 @@ LIB_FLAG = \
 	#-L$(PROJECT_ROOT)/../third_party/lib/aarch64/x86_64
 
 LIB_FLAGS =
-LIBXX_FLAGS = -lECP -lpthread -lmosquitto -lAudio -lpowerct
+LIBXX_FLAGS = -lECP -lpthread -lmosquitto -lAudio -lpowerct -lipo_blank
 
 C_FLAGS = 
 CXX_FLAGS = -std=c++14 -g

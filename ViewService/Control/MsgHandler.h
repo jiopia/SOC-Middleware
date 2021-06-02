@@ -75,7 +75,10 @@ private:
 
     std::string GetDoorInfoFlagStr(ViewNode viewNode);
     bool CheckAccStatusConform(std::shared_ptr<ViewInfo> pViewInfo);
-    
+
+    bool GetAllWarnHidenStatus();
+    void SetAllWarnHidenStatus(bool status);
+
     timer_t m_timerId;
 
     AudioControl *m_audioControl;
@@ -95,6 +98,10 @@ private:
 
     std::mutex m_mtxAccStatus;
     VehicleAccStatus m_vehicleStatus = VEHICLE_DEFAULT;
+
+    /* 告警信息是否全部隐藏的标志 */
+    std::mutex m_mtxHideAll;
+    bool m_isAllWarnHidden = false;
 };
 
 #endif // !_MSG_HANDLER_H_
