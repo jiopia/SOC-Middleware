@@ -27,7 +27,7 @@ Actuator::~Actuator()
 
 void Actuator::Run()
 {
-    InfoPrint("RUN......\n");
+    DIAG_INFO("RUN......\n");
 
     m_msgHandler->Start();
 
@@ -57,7 +57,7 @@ void Actuator::MsgReciever()
 
 void Actuator::MsgProcessor(std::string strMsg)
 {
-    InfoPrint("Recieve Warning Message From Mqtt:[%s]\r\n", strMsg.c_str());
+    DIAG_INFO("Recieve Warning Message From Mqtt:[%s]\n", strMsg.c_str());
     std::string strViewName, strExtraInfo, strViewStatus;
     JsonHandler::GetInstance()->WarnMsgParse(strMsg, strViewName, strExtraInfo, strViewStatus);
     if (!strViewName.empty() &&
@@ -103,7 +103,7 @@ int Actuator::WarnShowTimerInit()
     retCode = timer_create(CLOCK_MONOTONIC, &event, &this->m_timerId);
     if (retCode != EOK)
     {
-        ErrPrint("Failed to Create WarnShow Timer. ErrCode:[%s].\n", strerror(retCode));
+        DIAG_ERR("Failed to Create WarnShow Timer. ErrCode:[%s].\n", strerror(retCode));
         exit(1);
     }
 
@@ -126,7 +126,7 @@ int Actuator::WarnShowTimerStart(int iTimeWaitBeforeStart)
     retCode = timer_settime(this->m_timerId, 0, &iTimer, NULL);
     if (retCode != EOK)
     {
-        ErrPrint("Failed to Set WarnShow Time. ErrCode:[%s].\n", strerror(retCode));
+        DIAG_ERR("Failed to Set WarnShow Time. ErrCode:[%s].\n", strerror(retCode));
     }
 
     return retCode;
@@ -148,7 +148,7 @@ int Actuator::WarnShowTimerStop()
     retCode = timer_settime(this->m_timerId, 0, &iTimer, NULL);
     if (retCode != EOK)
     {
-        ErrPrint("Failed to Set WarnShow Timer. ErrCode:[%s].\n", strerror(retCode));
+        DIAG_ERR("Failed to Set WarnShow Timer. ErrCode:[%s].\n", strerror(retCode));
     }
 
     return retCode;
@@ -159,7 +159,7 @@ int Actuator::WarnShowTimerDelete()
     int retCode = timer_delete(this->m_timerId);
     if (retCode != EOK)
     {
-        ErrPrint("Failed to Delete WarnShow Timer. ErrCode:[%s].\n", strerror(retCode));
+        DIAG_ERR("Failed to Delete WarnShow Timer. ErrCode:[%s].\n", strerror(retCode));
     }
 
     return retCode;

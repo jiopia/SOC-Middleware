@@ -3,6 +3,7 @@
 
 #include "Util.h"
 #include "MsgDataDefine.h"
+#include "sound.h"
 
 #define MEDIA_PATH "/etc/media/"
 
@@ -30,6 +31,9 @@ public:
 	void UpdataVehicalAccStatus(SoundSwitch status);
 	VehicleAccStatus GetVehicalAccStatus();
 
+	void UpdataAudioCtrlAdscription(SoundSwitch status);
+	AudioCtrlAdscription GetAudioCtrlAdscription();
+
 private:
 	void AudioPlayThread(std::string filename, int iLoop, std::string strFreq);
 
@@ -42,6 +46,9 @@ private:
 
 	std::mutex m_mtxAccStatus;
 	VehicleAccStatus m_vehicleStatus = VEHICLE_DEFAULT;
+
+	std::mutex m_mtxAudioCtrl;
+	AudioCtrlAdscription m_audioCtrlAdscription = AUDIO_CTRL_BELONG_TO_MCU;
 };
 
 #endif /* SOUNDPLAY_H_ */

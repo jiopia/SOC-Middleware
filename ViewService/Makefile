@@ -53,7 +53,7 @@ LIB_FLAG = \
 	#-L$(PROJECT_ROOT)/../third_party/lib/aarch64/x86_64
 
 LIB_FLAGS =
-LIBXX_FLAGS = -lrt -lpthread -lmosquitto
+LIBXX_FLAGS = -lrt -lpthread -lmosquitto -lsyslog_diag
 
 C_FLAGS = 
 CXX_FLAGS = -std=c++11

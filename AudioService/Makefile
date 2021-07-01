@@ -32,6 +32,7 @@ SRC_PATH = \
 	$(COMMON_SRC_PATH)
 
 INCLUDE_FLAG = \
+	-I$(PROJECT_ROOT)/../common/bdsdk/include \
 	-I$(PROJECT_ROOT)/../common/Utils \
 	-I$(PROJECT_ROOT)/../common/Utils/cJSON \
 	-I$(PROJECT_ROOT)/../common/Utils/JsonHandler \
@@ -51,7 +52,7 @@ LIB_FLAG = \
 	#-L$(PROJECT_ROOT)/../third_party/lib/aarch64/x86_64
 
 LIB_FLAGS =
-LIBXX_FLAGS = -lAudio -lrt -lpthread -lmosquitto #-l:libmosquitto.a
+LIBXX_FLAGS = -lAudio -lrt -lpthread -lmosquitto -lsyslog_diag #-l:libmosquitto.a
 
 C_FLAGS = 
 CXX_FLAGS = -std=c++11

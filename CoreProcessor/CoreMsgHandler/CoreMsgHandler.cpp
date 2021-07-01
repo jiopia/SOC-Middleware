@@ -14,11 +14,15 @@ CoreMsgHandler::CoreMsgHandler() : m_jsonHandler(JsonHandler::GetInstance())
 
     std::vector<std::string> strTopicList;
     strTopicList.emplace_back(MQTT_TOPIC_WARN_HMI_TO_MW);
+    strTopicList.emplace_back(MQTT_TOPIC_WARN_AUDIO_TO_MW);
 
     m_connClient = std::make_shared<MqttConnection>(MQTT_HOST, MQTT_PORT, BDSTAR_SOCKET_MQTT);
     m_connClient->Subscribe(strTopicList);
 
     m_connClient->Run();
+
+    std::thread mcuHeartBeatTh(std::bind(&CoreMsgHandler::McuHeartBeatThread, this));
+    mcuHeartBeatTh.detach();
 }
 
 CoreMsgHandler::~CoreMsgHandler()
@@ -59,8 +63,8 @@ void CoreMsgHandler::E02_MsgReciever(ECPVehicleValue rData)
     case MTYPE_SETUP:
         SetupMsgHandler(rData.MsgID, ucMsgData, iDataLen);
         break;
-    case MTYPE_KEY:
-        KeyMsgHandler(rData.MsgID, ucMsgData, iDataLen);
+    case MTYPE_KEY_AND_AUDIO_CTL:
+        KeyAndAudioCtrlMsgHandler(rData.MsgID, ucMsgData, iDataLen);
         break;
     case MTYPE_EOL:
         EOLMsgHandler(rData.MsgID, ucMsgData, iDataLen);
@@ -72,24 +76,35 @@ void CoreMsgHandler::E02_MsgReciever(ECPVehicleValue rData)
     return;
 }
 
-void CoreMsgHandler::E02_Request(uint32_t uiMsgType, uint32_t uiMsgId)
+void CoreMsgHandler::E02_Request(uint32_t uiMsgType, uint32_t uiMsgId, uint8_t uchValue, ECPCallBackType ecpCbType, uint32_t ecpProtocal)
 {
     if (ptrECP != NULL)
     {
         typeInt2Chars nValChanges;
-        nValChanges.int32Val[0] = uiMsgType;                                     //B3CC MsgType
-        nValChanges.int32Val[1] = uiMsgId;                                       //B3CC MsgID
-        vector<uint8_t> getVals(nValChanges.uint8Val, nValChanges.uint8Val + 8); //value data
+        nValChanges.int32Val[0] = uiMsgType; //E02_SPI_MsgType 0x04
+        nValChanges.int32Val[1] = uiMsgId;   //E02_SPI_MsgID   0x0B
+        nValChanges.int32Val[2] = uchValue;  //E02_SPI_MsgData 0x01/0x02
+        std::vector<uint8_t> rawDatas(nValChanges.uint8Val, nValChanges.uint8Val + 12);
 
         ECPVehicleValue requestValue_t;
-        requestValue_t.MsgType = GET_PROPDATA; //E02_Get_MsgType
-        requestValue_t.MsgID = 0x00;           //E02_Get_MsgID
-        requestValue_t.RawData = getVals;      //E02_Get_MsgRawData
+        requestValue_t.MsgType = ecpProtocal; //E02_Get_MsgType
+        requestValue_t.MsgID = 0x00;          //E02_Get_MsgID
+        requestValue_t.RawData = rawDatas;    //E02_Get_MsgRawData
         requestValue_t.length = sizeof(requestValue_t.MsgType) +
                                 sizeof(requestValue_t.MsgID) +
                                 requestValue_t.RawData.size(); //E02_Get_DataLen
 
-        ptrECP->setMcuValue(requestValue_t);
+        switch (ecpCbType)
+        {
+        case ECP_TYPE_MCU:
+            ptrECP->setMcuValue(requestValue_t);
+            break;
+        case ECP_TYPE_ANDROID:
+            ptrECP->setAndroidValue(requestValue_t);
+            break;
+        default:
+            break;
+        }
     }
 }
 
@@ -100,9 +115,7 @@ void CoreMsgHandler::Run()
 
     /* 初始化ACC状态 */
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    uint32_t uiMsgType = MTYPE_ACTION;
-    uint32_t uiMsgId = MTYPE_ACTION_MSGID_KEY;
-    this->E02_Request(uiMsgType, uiMsgId);
+    this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_KEY);
 
     InfoPrint("RUN......\n");
     while (1)
@@ -126,30 +139,44 @@ void CoreMsgHandler::MsgReciever()
 
 void CoreMsgHandler::MqttMsgProcessor(MsgData msgData)
 {
-    InfoPrint("Message:[%s] Comming From Topic:[%s]\r\n", msgData.strMsg.c_str(), msgData.strTopic.c_str());
+    InfoPrint("Message:[%s] Comming From Topic:[%s]\n", msgData.strMsg.c_str(), msgData.strTopic.c_str());
 
     /* HMI发送给中间件的消息 */
     if (msgData.strTopic.compare(MQTT_TOPIC_WARN_HMI_TO_MW) == 0)
     {
         std::string strMsg = msgData.strMsg;
-        if (!strMsg.empty() && strMsg.length() == 4)
+        if (!strMsg.empty())
         {
-            uint32_t uiMsgType = strtol(strMsg.substr(0, 2).c_str(), 0, 10);
-            uint32_t uiMsgId = strtol(strMsg.substr(2, 2).c_str(), 0, 10);
+            uint32_t uiMsgType = strtol(strMsg.substr(0, 2).c_str(), 0, 16);
+            uint32_t uiMsgId = strtol(strMsg.substr(2, 2).c_str(), 0, 16);
+            uint8_t uiMsgData[8] = {0};
+            int iDataLen = StrToUCharArr(uiMsgData, strMsg.substr(4));
 
-            ProcessHMIRequest(uiMsgType, uiMsgId);
+            ProcessHMIRequest(uiMsgType, uiMsgId, uiMsgData, iDataLen);
+        }
+    }
+    /* Audio发送给中间件的消息 */
+    else if (msgData.strTopic.compare(MQTT_TOPIC_WARN_AUDIO_TO_MW) == 0)
+    {
+        std::string strMsg = msgData.strMsg;
+        /* 音频控制权申请 */
+        if (!strMsg.empty() && strMsg.compare("audio_ctrl_mode_req") == 0)
+        {
+            this->E02_Request(MTYPE_KEY_AND_AUDIO_CTL, MTYPE_AUDIO_CTRL_REQUEST_MSGID_KEY, AUDIO_CTRL_REQUEST);
         }
     }
 }
 
-void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
+void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId, uint8_t *uiMsgData, int iDataLen)
 {
     switch (uiMsgType)
     {
+    /* 报警信息 */
     case HMI_MSG_TYPE_WARNING:
     {
         switch (uiMsgId)
         {
+        /* 获取当前报警信息 */
         case HMI_MGS_WARNING_ID_GET:
         {
             this->SendViewPageInfo("get_curr_warn", "get_curr_warn", "ON");
@@ -159,22 +186,26 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
             this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_PEPS);
         }
         break;
+        /* 隐藏报警信息 */
         case HMI_MGS_WARNING_ID_NOWARN:
         {
             this->SendViewPageInfo("warn_hiden", "warn_hiden", "ON");
         }
         break;
+        /* 胎压系统故障 */
         case HMI_MGS_WARNING_ID_TIRE_PRESS:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_EXTERNEL_TIRE_PRESSURE);
         }
         break;
+        /* 胎压报警信息 */
         case HMI_MGS_WARNING_ID_TIRE_PRESS_WARN:
         {
             this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_ALARM_TIRE);
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_EXTERNEL_TIRE_FAULT);
         }
         break;
+        /* 胎压故障 */
         case HMI_MGS_WARNING_ID_TIRE_TEMP:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_EXTERNEL_TIRE_TEMPERATURE);
@@ -185,6 +216,7 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
         }
     }
     break;
+    /* 交互信息 */
     case HMI_MSG_TYPE_NAVI:
     {
         IPCData ipcData;
@@ -243,6 +275,16 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
                    sizeof(m_vehicleWorkData_t.navigationInfo_t.authorName));
         }
         break;
+        case HMI_MGS_NAVI_ID_CAST_SCREEN_REQUEST:
+        {
+            /* 投屏请求与退出 05 10 XX YY...ZZ */
+            if (iDataLen != 0)
+            {
+                this->E02_Request(MTYPE_INTERACTIVE, NAVIGATION_CAST_SCREEN_REQUEST,
+                                  uiMsgData[0], ECP_TYPE_ANDROID);
+            }
+        }
+        break;
         default:
             break;
         }
@@ -262,21 +304,25 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
     {
         switch (uiMsgId)
         {
+        /* 档位信息 */
         case HMI_MGS_ODO_ID_GEAR:
         {
             this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_GEAR_BOX);
         }
         break;
+        /* 总计里程 */
         case HMI_MGS_ODO_ID_ODO:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_TOTAL_MILEAGE);
         }
         break;
+        /* 小计里程 */
         case HMI_MGS_ODO_ID_TRIP_A:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_SUBTOTAL_MILEAGE);
         }
         break;
+        /* 环境温度 */
         case HMI_MGS_ODO_ID_OUTSIDE_TEMPERATURE:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_EXTERNEL_TEMPERATURE);
@@ -287,21 +333,26 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
         }
     }
     break;
+    /* 测量信息 */
     case HMI_MGS_TYPE_GUAGE:
     {
         switch (uiMsgId)
         {
+        /* 车速信息 */
         case HMI_MGS_GUAGE_ID_SPEED:
+        /* 转速信息 */
         case HMI_MGS_GUAGE_ID_RPM:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_SPEED_AND_RPM);
         }
         break;
+        /* 发动机冷却液温度 */
         case HMI_MGS_GUAGE_ID_COOLANT_TEMPERATURE:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_COOLAND_TEMPERATURE);
         }
         break;
+        /* 油量信息 */
         case HMI_MGS_GUAGE_ID_FUEL:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_FULE_TRAVLE);
@@ -312,10 +363,12 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
         }
     }
     break;
+    /* 报警灯/转向灯信息 */
     case HMI_MSG_TYPE_TELLTALE:
     {
         switch (uiMsgId)
         {
+        /* 报警灯信息 */
         case HMI_MGS_TELLTALE_WARNING:
         {
             this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_FAULT);
@@ -327,6 +380,7 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
             this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_OILLOW);
         }
         break;
+        /* 转向灯信息 */
         case HMI_MGS_TELLTALE_TURN_SIGNAL:
         {
             this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_CAR_LIGHT);
@@ -337,10 +391,12 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
         }
     }
     break;
+    /* 系统信息 */
     case HMI_MSG_TYPE_SETTING:
     {
         switch (uiMsgId)
         {
+        /* ACC状态信息 */
         case HMI_MGS_SET_ID_HMISTATUS:
         {
             this->E02_Request(MTYPE_ACTION, MTYPE_ACTION_MSGID_KEY);
@@ -351,20 +407,24 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
         }
     }
     break;
+    /* 统计信息 */
     case HMI_MSG_TYPE_ECU:
     {
         switch (uiMsgId)
         {
+        /* 瞬时油耗 */
         case HMI_MGS_ECU_ID_INS_FUEL:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_INTANT_FUEL);
         }
         break;
+        /* 平均油耗 */
         case HMI_MGS_ECU_ID_AVE_FUEL:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_AVERAGE_FUEL);
         }
         break;
+        /* 续航里程 */
         case HMI_MGS_ECU_ID_ENDURANCE:
         {
             this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_ENDURANCE_MILEAGE);
@@ -382,6 +442,34 @@ void CoreMsgHandler::ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId)
     case HMI_MSG_TYPE_EOL:
     {
         // this->E02_Request(uiMsgType, uiMsgId);
+    }
+    break;
+    /* ODO (小计里程)清零 */
+    case HMI_MSG_TYPE_ODO_CLEAN:
+    {
+        unsigned char ucMsgData = 0x00;
+        if (iDataLen != 0)
+        {
+            ucMsgData = uiMsgData[0];
+        }
+
+        InfoPrint("ODO Clean Now.\n");
+        this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_SUBTOTAL_MILEAGE,
+                          ucMsgData, ECP_TYPE_MCU);
+    }
+    break;
+    /* ECU (平均油耗)清零 */
+    case HMI_MSG_TYPE_ECU_CLEAN:
+    {
+        unsigned char ucMsgData = 0x00;
+        if (iDataLen != 0)
+        {
+            ucMsgData = uiMsgData[0];
+        }
+
+        InfoPrint("ECU Clean Now.\n");
+        this->E02_Request(MTYPE_DATA, MTYPE_DATA_MSGID_AVERAGE_FUEL,
+                          ucMsgData, ECP_TYPE_MCU);
     }
     break;
     default:
@@ -440,8 +528,6 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
             ipcData.m_msgID = HMI_MGS_SETUP_ID_IGN_STATUS; //B3CC MsgId
             ipcData.m_msgLength = 0x01;                    //B3CC DataLength
             ipcData.m_msgData[0] = uchIgnStatus;
-
-            printf("\nSend IGN Status:[0x%02X] to HMI.\n", uchIgnStatus);
         }
     }
     break;
@@ -450,6 +536,8 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
     {
         int iValueLow = std::strtol(HexToStr(ucMsgData[0]).c_str(), 0, 16);
         unsigned char ucLightSignalValueLow = iValueLow & 0xFF;
+
+        InfoPrint("Car Light Info:0x%02X\n", ucLightSignalValueLow);
 
         unsigned char uchTurnLeftLightOld = m_vehicleWorkData_t.telltaleData_t.turn_light_t.byte1_t.turnLeftLight;
         unsigned char uchTurnLeftLightNew = GET_BIT(ucLightSignalValueLow, 0);
@@ -893,7 +981,7 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
         int iValue = std::strtol(HexToStr(ucMsgData[0]).c_str(), 0, 16);
         unsigned char ucOilLightInfo = iValue & 0xFF;
 
-        m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte6_t.oilPressureLow = ucOilLightInfo & 0x01;
+        m_vehicleWorkData_t.telltaleData_t.warn_light_t.byte5_t.oilFuelLowLight = ucOilLightInfo & 0x01;
 
         /* 报警指示灯 03 01 07 XX...XX */
         ipcData.m_msgType = HMI_MSG_TYPE_TELLTALE;  //B3CC MsgType
@@ -922,7 +1010,7 @@ void CoreMsgHandler::ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucM
 /* 车速、发动机转速、燃油量、水温、里程 */
 void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen)
 {
-    DebugPrint("Now Process Data Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
+    InfoPrint("Now Process Data Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
     DebugPrintMsg(ucMsgData, iDataLen);
 
     switch (uiMsgId)
@@ -960,6 +1048,8 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
             std::string strMsgSend;
             strMsgSend.append(strMsgType).append(strMsgId).append(strLen).append(strMsgData);
             m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_MW_TO_HMI), strMsgSend);
+
+            this->SendViewPageInfo("vehicle_speed", strVehicleSpeedValue, "ON"); //车速信息发送给ViewService
         }
 
         {
@@ -1219,7 +1309,7 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
     {
         if (iDataLen != 4)
         {
-            ErrPrint("Total Mileage Data From MCU Data!");
+            DIAG_ERR("Total Mileage Data From MCU Data!");
             break;
         }
 
@@ -1245,7 +1335,7 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
     {
         if (iDataLen != 4)
         {
-            ErrPrint("SubTotal Mileage Data From MCU Data!");
+            DIAG_ERR("SubTotal Mileage Data From MCU Data!");
             break;
         }
 
@@ -1271,7 +1361,7 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
     {
         if (iDataLen != 2)
         {
-            ErrPrint("Endurance Mileage Data From MCU Data!");
+            DIAG_ERR("Endurance Mileage Data From MCU Data!");
             break;
         }
 
@@ -1294,7 +1384,7 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
     {
         if (iDataLen != 4)
         {
-            ErrPrint("Average Fuel Data From MCU Data!");
+            DIAG_ERR("Average Fuel Data From MCU Data!");
             break;
         }
 
@@ -1319,7 +1409,7 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
     {
         if (iDataLen != 4)
         {
-            ErrPrint("Intant Fuel Data From MCU Data!");
+            DIAG_ERR("Intant Fuel Data From MCU Data!");
             break;
         }
 
@@ -1344,7 +1434,7 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
     {
         if (iDataLen != 9)
         {
-            ErrPrint("Temperature Data From MCU Data!");
+            DIAG_ERR("Temperature Data From MCU Data!");
             break;
         }
 
@@ -1354,8 +1444,6 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
          */
         float fInsideTemp = IEE754_HexToFloat(&ucMsgData[1]);
         float fOutsideTemp = IEE754_HexToFloat(&ucMsgData[5]);
-        printf("fInsideTemp:%f\n", fInsideTemp);
-        printf("fOutsideTemp:%f\n", fOutsideTemp);
 
         char strInsideBuff[4] = {0};
         sprintf(strInsideBuff, "%.1f", fInsideTemp);
@@ -1389,7 +1477,7 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
     {
         if (iDataLen != 9)
         {
-            ErrPrint("Tire Pressure Data From MCU Data!");
+            DIAG_ERR("Tire Pressure Data From MCU Data!");
             break;
         }
 
@@ -1478,7 +1566,7 @@ void CoreMsgHandler::DataMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsg
     {
         if (iDataLen != 8)
         {
-            ErrPrint("Tire Temperature Data From MCU Data!");
+            DIAG_ERR("Tire Temperature Data From MCU Data!");
             break;
         }
 
@@ -1757,6 +1845,15 @@ void CoreMsgHandler::InteractiveMsgHandler(uint32_t uiMsgId, const unsigned char
         memcpy(ipcData.m_msgData, &ucMsgData[0], iDataLen);
     }
     break;
+    /* 投屏信息 */
+    case NAVIGATION_CAST_SCREEN_RESPONSE:
+    {
+        ipcData.m_msgType = HMI_MSG_TYPE_NAVI;                  //B3CC MsgType
+        ipcData.m_msgID = HMI_MGS_NAVI_ID_CAST_SCREEN_RESPONSE; //B3CC MsgId
+        ipcData.m_msgLength = iDataLen;                         //B3CC DataLength
+        memcpy(ipcData.m_msgData, ucMsgData, iDataLen);
+    }
+    break;
     default:
         break;
     }
@@ -1820,19 +1917,19 @@ void CoreMsgHandler::SetupMsgHandler(uint32_t uiMsgId, const unsigned char *ucMs
     }
 }
 
-void CoreMsgHandler::KeyMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen)
+void CoreMsgHandler::KeyAndAudioCtrlMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen)
 {
-    InfoPrint("Now Process Key Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
+    InfoPrint("Now Process Key And Audio COntrol Message. MsgId:[0x%02x], DataLen:[%d]\n", uiMsgId, iDataLen);
     DebugPrintMsg(ucMsgData, iDataLen);
 
     switch (uiMsgId)
     {
-    /* 按键 [XX] [YY] => [KeyValue] [KeyStatus]*/
+    /* 按键 0x06 0x01 [XX] [YY] => [KeyValue] [KeyStatus]*/
     case MTYPE_KEY_MSGID_KEY:
     {
         if (iDataLen != 2)
         {
-            ErrPrint("Key Data From MCU Data!");
+            DIAG_ERR("Key Data From MCU Data!");
             break;
         }
 
@@ -1847,6 +1944,31 @@ void CoreMsgHandler::KeyMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgD
         std::string strMsgSend;
         strMsgSend.append(strMsgType).append(strMsgId).append(strLen).append(strMsgData);
         m_connClient->MsgSend(std::string(MQTT_TOPIC_WARN_MW_TO_HMI), strMsgSend);
+    }
+    break;
+    /* 音频控制权状态 0x06 0x03 [XX] => [XX->0x01:MCU] [XX->0x02:DHU]*/
+    case MTYPE_AUDIO_CTRL_REPORT_MSGID_KEY:
+    {
+        if (iDataLen != 1)
+        {
+            DIAG_ERR("Audio Control Report Data From MCU Data!");
+            break;
+        }
+
+        if (m_audioCtrlAdscription != ucMsgData[0])
+        {
+            std::lock_guard<std::mutex> lockGuard(m_mtxAudioCtrl);
+            if (ucMsgData[0] == AUDIO_CTRL_BELONG_TO_MCU)
+            {
+                m_audioCtrlAdscription = AUDIO_CTRL_BELONG_TO_MCU;
+                this->SendAudioWarnInfo("audio_belong2dhu", "OFF");
+            }
+            else if (ucMsgData[0] == AUDIO_CTRL_BELONG_TO_DHU)
+            {
+                m_audioCtrlAdscription = AUDIO_CTRL_BELONG_TO_DHU;
+                this->SendAudioWarnInfo("audio_belong2dhu", "ON");
+            }
+        }
     }
     break;
     default:
@@ -1951,6 +2073,15 @@ void CoreMsgHandler::PowerOffTimerThread()
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     iTimers = 0;
+}
+
+void CoreMsgHandler::McuHeartBeatThread()
+{
+    while (1)
+    {
+        this->E02_Request(MTYPE_NODE_ALIVE, MTYPE_NODEALIVE_MSGID_WATCH_DOG, 0xFF);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 }
 
 static void ReadCallBackFunc(const ECPVehicleValue &rData)

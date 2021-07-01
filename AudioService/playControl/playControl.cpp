@@ -7,6 +7,7 @@ extern "C"
 
 PlayControl::PlayControl()
 {
+	m_pSoudPlay = new SoudPlay();
 	pthread_mutex_init(&m_listSoundLock, NULL);
 }
 
@@ -17,6 +18,12 @@ PlayControl::~PlayControl()
 	{
 		delete m_pReadFile;
 		m_pReadFile = NULL;
+	}
+
+	if (m_pSoudPlay != NULL)
+	{
+		delete m_pSoudPlay;
+		m_pSoudPlay = NULL;
 	}
 }
 
@@ -33,7 +40,13 @@ void PlayControl::pushSound(std::string strName, SoundSwitch iOnOff)
 {
 	if (strName == "ACC")
 	{
-		UpdataVehicalAccStatus(iOnOff) return;
+		m_pSoudPlay->UpdataVehicalAccStatus(iOnOff);
+		return;
+	}
+	else if (strName == "audio_belong2dhu")
+	{
+		m_pSoudPlay->UpdataVehicalAccStatus(iOnOff);
+		return;
 	}
 
 	auto iterFind = m_mapConfig.find(strName);
@@ -45,7 +58,7 @@ void PlayControl::pushSound(std::string strName, SoundSwitch iOnOff)
 
 	pthread_mutex_lock(&m_listSoundLock);
 
-	/* 对转向灯逻辑进行特殊处理 */
+	/* 瀵硅浆鍚戠伅閫昏緫杩涜鐗规畩澶勭悊 */
 	for (auto iterList = m_listSound.begin(); iterList != m_listSound.end(); iterList++)
 	{
 		if ("turn_on" == strName || "turn_off" == strName)
@@ -116,7 +129,7 @@ void PlayControl::getOneSound(Sound *&pSound)
 	{
 		for (list<Sound *>::iterator iter = m_listSound.begin(); iter != m_listSound.end(); iter++)
 		{
-			if (m_SoudPlay.GetVehicalAccStatus() == VEHICLE_ON)
+			if (m_pSoudPlay->GetVehicalAccStatus() == VEHICLE_ON)
 			{
 				if ("wm1" == (*iter)->getPowerMode() || "wm12" == (*iter)->getPowerMode())
 				{
@@ -124,7 +137,7 @@ void PlayControl::getOneSound(Sound *&pSound)
 					break;
 				}
 			}
-			else if (m_SoudPlay.GetVehicalAccStatus() == VEHICLE_OFF)
+			else if (m_pSoudPlay->GetVehicalAccStatus() == VEHICLE_OFF)
 			{
 				if ("wm2" == (*iter)->getPowerMode() || "wm12" == (*iter)->getPowerMode())
 				{
@@ -166,7 +179,7 @@ void PlayControl::printAll(std::string strLog)
 		strAllDialogInfo += (*iter)->m_soundSwitch == 0 ? "OFF" : "ON";
 	}
 
-	DebugPrint("%s\n", strAllDialogInfo.c_str());
+	DIAG_INFO("%s\n", strAllDialogInfo.c_str());
 	pthread_mutex_unlock(&m_listSoundLock);
 }
 
@@ -182,7 +195,7 @@ void PlayControl::handleNode()
 			{
 				this->removeOneSound(pSound);
 				m_pCurSound = NULL;
-				m_SoudPlay.stopPlay();
+				m_pSoudPlay->stopPlay();
 			}
 			else if (pSound->getSoundSwitch() == SOUND_ON)
 			{
@@ -190,8 +203,8 @@ void PlayControl::handleNode()
 				{
 					pSound->setLoop(pSound->getLeftPlayNum());
 				}
-				m_SoudPlay.stopPlay();
-				m_SoudPlay.playWarning(pSound->getChimeId(), pSound->getLoop(), pSound->getFreq());
+				m_pSoudPlay->stopPlay();
+				m_pSoudPlay->playWarning(pSound->getChimeId(), pSound->getLoop(), pSound->getFreq());
 				m_pCurSound = pSound;
 			}
 		}
@@ -203,11 +216,11 @@ void PlayControl::handleNode()
 				{
 					this->removeOneSound(pSound);
 					m_pCurSound = NULL;
-					m_SoudPlay.stopPlay();
+					m_pSoudPlay->stopPlay();
 				}
 				else if (pSound->getSoundSwitch() == SOUND_ON)
 				{
-					if (m_SoudPlay.GetAudioPlayThreadStatus() == AUDIO_STOP)
+					if (m_pSoudPlay->GetAudioPlayThreadStatus() == AUDIO_STOP)
 					{
 						this->removeOneSound(pSound);
 						m_pCurSound = NULL;
@@ -220,14 +233,14 @@ void PlayControl::handleNode()
 				{
 					this->removeOneSound(m_pCurSound);
 					m_pCurSound = NULL;
-					m_SoudPlay.stopPlay();
+					m_pSoudPlay->stopPlay();
 				}
 				else if (m_pCurSound->getPlayMode() == "continue")
 				{
-					m_pCurSound->setLeftPlayNum(m_SoudPlay.getCurLeftNum());
+					m_pCurSound->setLeftPlayNum(m_pSoudPlay->getCurLeftNum());
 				}
-				m_SoudPlay.stopPlay();
-				m_SoudPlay.playWarning(pSound->getChimeId(), pSound->getLoop(), pSound->getFreq());
+				m_pSoudPlay->stopPlay();
+				m_pSoudPlay->playWarning(pSound->getChimeId(), pSound->getLoop(), pSound->getFreq());
 				m_pCurSound = pSound;
 			}
 		}
@@ -240,7 +253,12 @@ void PlayControl::Run()
 	{
 		handleNode();
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		// m_SoudPlay.playWarning("warning.wav", 0, "", "");
+		// m_pSoudPlay->playWarning("warning.wav", 0, "", "");
 		// std::this_thread::sleep_for(std::chrono::seconds(5));
 	}
+}
+
+AudioCtrlAdscription PlayControl::GetAudioCtrlAdscription()
+{
+	return m_pSoudPlay->GetAudioCtrlAdscription();
 }

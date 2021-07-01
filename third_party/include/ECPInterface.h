@@ -22,8 +22,8 @@ enum ECPCallBackType
 };
 
 //MCU定义的协议：
-#define GET_PROPDATA 0X21411030
-#define SET_REPORT_PERIOD 0X21411031
+#define GET_PROPDATA 0x21411030
+#define SET_REPORT_PERIOD 0x21411031
 
 typedef void (*ReadDataCallBack)(const ECPVehicleValue &rData);
 

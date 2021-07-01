@@ -59,7 +59,7 @@ void MqttConnection::Connect()
 {
     if (mosquitto_connect(this->m_ptrMosq, this->m_strHost.c_str(), this->m_iPort, this->m_iKeepAlive) != MOSQ_ERR_SUCCESS)
     {
-        ErrPrint("Connect Error\r\n");
+        DIAG_ERR("Connect Error\n");
         MqttConnection::m_isConnected = false;
         if (this->m_ptrMosq != NULL)
         {
@@ -80,7 +80,7 @@ void MqttConnection::MsgRecieve()
 
 void MqttConnection::MsgSend(std::string strTopic, std::string strMsg)
 {
-    InfoPrint("MsgSend--> Topic:[%s], Message:[%s]\r\n", strTopic.c_str(), strMsg.c_str());
+    // DIAG_INFO("MsgSend--> Topic:[%s], Message:[%s]\n", strTopic.c_str(), strMsg.c_str());
     mosquitto_publish(this->m_ptrMosq, NULL, strTopic.c_str(), strMsg.length(), (void *)strMsg.c_str(), 1, false);
 }
 
@@ -96,7 +96,6 @@ void MqttConnection::Subscribe(std::vector<std::string> &strTopicList)
 
 void MqttConnection::UnSubscribe(std::vector<std::string> &strTopicList)
 {
-    // std::vector<std::string>().swap(m_strTopicList);
     for (auto iter = strTopicList.begin(); iter != strTopicList.end(); iter++)
     {
         std::string strTopic = *iter;
@@ -112,29 +111,27 @@ void MqttConnection::UnSubscribe(std::vector<std::string> &strTopicList)
 
 void MqttConnection::on_connect_callback(struct mosquitto *mosq, void *obj, int rc)
 {
-    DebugPrint("Mqtt Connect Success\r\n");
+    DIAG_INFO("Mqtt Connect Success\n");
     MqttConnection::m_isConnected = true;
 }
 
 void MqttConnection::on_disconnect_callback(struct mosquitto *mosq, void *obj, int result)
 {
-    WarnPrint("Mqtt Disconnected\r\n");
+    DIAG_WARN("Mqtt Disconnected\n");
     MqttConnection::m_isConnected = false;
 }
 
 void MqttConnection::on_publish_callback(struct mosquitto *mosq, void *obj, int mid)
 {
-    DebugPrint("on_publish_callback\r\n");
 }
 
 void MqttConnection::on_subscribe_callback(struct mosquitto *mosq, void *obj, int mid, int qos_count, const int *granted_qos)
 {
-    DebugPrint("on_subscribe_callback\r\n");
 }
 
 void MqttConnection::on_message_callback(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {
-    InfoPrint("FROM topic:[%s], GOT message:[%s]", msg->topic, (const char *)msg->payload);
+    // DIAG_INFO("FROM topic:[%s], GOT message:[%s]", msg->topic, (const char *)msg->payload);
 
     std::string strTopic = msg->topic;
     std::string strMsg = (const char *)msg->payload;

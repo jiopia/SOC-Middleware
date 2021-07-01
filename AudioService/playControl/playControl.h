@@ -7,6 +7,7 @@
 #include "readXmlFile.h"
 #include "soundplay.h"
 #include "MqttConnection.hpp"
+#include "MsgDataDefine.h"
 #include "Util.h"
 #include "Thread.h"
 
@@ -33,8 +34,11 @@ public:
 
 	void Run();
 
+	AudioCtrlAdscription GetAudioCtrlAdscription();
+
 private:
-	SoudPlay m_SoudPlay;
+
+	SoudPlay *m_pSoudPlay = NULL;
 
 	readXmlFile *m_pReadFile = NULL;
 

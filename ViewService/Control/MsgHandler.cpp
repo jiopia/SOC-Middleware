@@ -48,6 +48,10 @@ void MsgHandler::SetWarnView(std::string strViewName, std::string strExtraInfo, 
             m_vehicleStatus = tempStatus;
         }
     }
+    else if (strViewName.compare("vehicle_speed") == 0)
+    {
+        m_strVehicleSpeed = strExtraInfo;
+    }
     else if (strViewName.compare("warn_hiden") == 0)
     {
         SetAllWarnHidenStatus(true);
@@ -78,11 +82,11 @@ void MsgHandler::SetWarnView(std::string strViewName, std::string strExtraInfo, 
         ViewInfoPtr viewInfo = m_xmlManager->GetViewInfo(strViewName);
         if (viewInfo == NULL)
         {
-            ErrPrint("Can NOT find ViewInfo which viewname is [%s]!\n", strViewName.c_str());
+            DIAG_ERR("Can NOT find ViewInfo which viewname is [%s]!\n", strViewName.c_str());
             return;
         }
 
-        InfoPrint("DEBUG -- View[%s], Extra[%s], Status[%s].\n",
+        DIAG_INFO("DEBUG -- View[%s], Extra[%s], Status[%s].\n",
                   strViewName.c_str(), strExtraInfo.c_str(), viewStatus == VIEW_ON ? "ON" : "OFF");
 
         ViewNode viewNode(strViewName, strExtraInfo, viewStatus);
@@ -95,14 +99,14 @@ void MsgHandler::SetWarnView(std::string strViewName, std::string strExtraInfo, 
  */
 void MsgHandler::RemoveCurrentWarn()
 {
-    WarnPrint("Remove Current Warning View Info.\n");
+    DIAG_WARN("Remove Current Warning View Info.\n");
     ViewNode tempViewNode;
     {
         std::lock_guard<std::mutex> lockGuard(m_mtxCurrWarn);
         tempViewNode = m_currViewNode;
     }
 
-    InfoPrint("WarnView:[%s]-[%s]\n", tempViewNode.strViewName.c_str(), tempViewNode.strExtraInfo.c_str());
+    DIAG_INFO("WarnView:[%s]-[%s]\n", tempViewNode.strViewName.c_str(), tempViewNode.strExtraInfo.c_str());
 
     EraseWarnViewNode(tempViewNode);
 
@@ -112,15 +116,15 @@ void MsgHandler::RemoveCurrentWarn()
         std::lock_guard<std::mutex> lockGuard(m_mtxLoop);
         if (find(m_loopViewList.begin(), m_loopViewList.end(), tempViewNode) == m_loopViewList.end())
         {
-            WarnPrint("WarnView:[%s] Need Push Loop List.\n", tempViewNode.strViewName.c_str());
+            DIAG_WARN("WarnView:[%s] Need Push Loop List.\n", tempViewNode.strViewName.c_str());
             m_loopViewList.emplace_back(tempViewNode);
         }
 
-        InfoPrint("m_loopViewList Size:[%d]\r\n", (int)m_loopViewList.size());
+        DIAG_INFO("m_loopViewList Size:[%d]\n", (int)m_loopViewList.size());
         for (auto iter : m_loopViewList)
         {
             ViewNode warnNode = iter;
-            InfoPrint("LoopWarnList -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\r\n",
+            DIAG_INFO("LoopWarnList -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\n",
                       warnNode.strViewName.c_str(),
                       warnNode.strExtraInfo.c_str(),
                       warnNode.viewStatus == VIEW_ON ? "ON" : "OFF");
@@ -128,7 +132,7 @@ void MsgHandler::RemoveCurrentWarn()
             for (auto iterExtraInfo : warnNode.extraInfos)
             {
                 ViewExtraInfo extraInfo = iterExtraInfo;
-                InfoPrint("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\r\n",
+                DIAG_INFO("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\n",
                           extraInfo.strExtraInfo.c_str(),
                           extraInfo.viewStatus == VIEW_ON ? "ON" : "OFF");
             }
@@ -159,7 +163,7 @@ void MsgHandler::HandleWarnViews()
 {
     if (GetAllWarnHidenStatus())
     {
-        InfoPrint("All warning message is Hidden now.\n");
+        DIAG_INFO("All warning message is Hidden now.\n");
         return;
     }
 
@@ -200,7 +204,7 @@ void MsgHandler::HandleWarnViews()
     {
     case VIEW_OFF:
     {
-        DebugPrint("---------> Debug 1\n");
+        DIAG_INFO("---------> Debug 1\n");
         EraseWarnViewNode(nextWarnViewNode);
         viewNeedExected = nextWarnViewNode;
         Actuator::GetInstance()->WarnShowTimerStop();
@@ -216,7 +220,7 @@ void MsgHandler::HandleWarnViews()
         AtLeastTimerStart(); //1.5秒最短显示计时开始
         Actuator::GetInstance()->WarnShowTimerStop();
         int iLoopTime = pNextViewInfo->GetLoop();
-        CriticalPrint("LoopTime:%d seconds.\n", iLoopTime);
+        DIAG_INFO("LoopTime:%d seconds.\n", iLoopTime);
         Actuator::GetInstance()->WarnShowTimerStart(iLoopTime);
         viewNeedExected = nextWarnViewNode;
 
@@ -240,7 +244,7 @@ void MsgHandler::HandleWarnViews()
  */
 void MsgHandler::HideAllWarn()
 {
-    WarnPrint("Hide All Warning View Info.\n");
+    DIAG_WARN("Hide All Warning View Info.\n");
     if (IsAtLeastTimeDone())
     {
         SetAllWarnHidenStatus(true);
@@ -252,7 +256,7 @@ void MsgHandler::HideAllWarn()
  */
 void MsgHandler::Notify(ViewNode &viewNode)
 {
-    InfoPrint("Handling -- View[%s], Extra[%s], Status[%s].\n",
+    DIAG_INFO("Handling -- View[%s], Extra[%s], Status[%s].\n",
               viewNode.strViewName.c_str(), viewNode.strExtraInfo.c_str(),
               (viewNode.viewStatus == VIEW_ON || viewNode.viewStatus == VIEW_OFF)
                   ? (viewNode.viewStatus == VIEW_ON ? "ON" : "OFF")
@@ -291,7 +295,7 @@ void MsgHandler::UpdateWarnViewNode(ViewNode viewNode)
     std::shared_ptr<ViewInfo> pViewInfo = m_xmlManager->GetViewInfo(viewNode.GetKeyName());
     if (pViewInfo == NULL)
     {
-        WarnPrint("ViewName:[%s], ExtraName:[%s] is NOT supported now......\n",
+        DIAG_WARN("ViewName:[%s], ExtraName:[%s] is NOT supported now......\n",
                   viewNode.strViewName.c_str(), viewNode.strExtraInfo.c_str());
         return;
     }
@@ -314,11 +318,11 @@ void MsgHandler::UpdateWarnViewNode(ViewNode viewNode)
 
 #if 1 /* -- Debug for Printing WarnInfo -- */
     {
-        InfoPrint("m_seriousViewList Size:[%d]\r\n", (int)m_seriousViewList.size());
+        DIAG_INFO("m_seriousViewList Size:[%d]\n", (int)m_seriousViewList.size());
         for (auto iter : m_seriousViewList)
         {
             ViewNode warnNode = iter;
-            InfoPrint("SeriousWarnList -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\r\n",
+            DIAG_INFO("SeriousWarnList -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\n",
                       warnNode.strViewName.c_str(),
                       warnNode.strExtraInfo.c_str(),
                       warnNode.viewStatus == VIEW_ON ? "ON" : "OFF");
@@ -326,17 +330,17 @@ void MsgHandler::UpdateWarnViewNode(ViewNode viewNode)
             for (auto iterExtraInfo : warnNode.extraInfos)
             {
                 ViewExtraInfo extraInfo = iterExtraInfo;
-                InfoPrint("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\r\n",
+                DIAG_INFO("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\n",
                           extraInfo.strExtraInfo.c_str(),
                           extraInfo.viewStatus == VIEW_ON ? "ON" : "OFF");
             }
         }
 
-        InfoPrint("m_freshViewList Size:[%d]\r\n", (int)m_freshViewList.size());
+        DIAG_INFO("m_freshViewList Size:[%d]\n", (int)m_freshViewList.size());
         for (auto iter : m_freshViewList)
         {
             ViewNode warnNode = iter;
-            InfoPrint("FreshWarnList -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\r\n",
+            DIAG_INFO("FreshWarnList -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\n",
                       warnNode.strViewName.c_str(),
                       warnNode.strExtraInfo.c_str(),
                       warnNode.viewStatus == VIEW_ON ? "ON" : "OFF");
@@ -344,17 +348,17 @@ void MsgHandler::UpdateWarnViewNode(ViewNode viewNode)
             for (auto iterExtraInfo : warnNode.extraInfos)
             {
                 ViewExtraInfo extraInfo = iterExtraInfo;
-                InfoPrint("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\r\n",
+                DIAG_INFO("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\n",
                           extraInfo.strExtraInfo.c_str(),
                           extraInfo.viewStatus == VIEW_ON ? "ON" : "OFF");
             }
         }
 
-        InfoPrint("m_loopViewList Size:[%d]\r\n", (int)m_loopViewList.size());
+        DIAG_INFO("m_loopViewList Size:[%d]\n", (int)m_loopViewList.size());
         for (auto iter : m_loopViewList)
         {
             ViewNode warnNode = iter;
-            InfoPrint("LoopWarnList -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\r\n",
+            DIAG_INFO("LoopWarnList -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\n",
                       warnNode.strViewName.c_str(),
                       warnNode.strExtraInfo.c_str(),
                       warnNode.viewStatus == VIEW_ON ? "ON" : "OFF");
@@ -362,13 +366,13 @@ void MsgHandler::UpdateWarnViewNode(ViewNode viewNode)
             for (auto iterExtraInfo : warnNode.extraInfos)
             {
                 ViewExtraInfo extraInfo = iterExtraInfo;
-                InfoPrint("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\r\n",
+                DIAG_INFO("----------> ExtraInfos -- ExtraInfo:[%s], OnOff[%s]\n",
                           extraInfo.strExtraInfo.c_str(),
                           extraInfo.viewStatus == VIEW_ON ? "ON" : "OFF");
             }
         }
 
-        InfoPrint("CurrentWarn -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\r\n",
+        DIAG_INFO("CurrentWarn -- ViewName:[%s], ExtraInfo:[%s], OnOff[%s]\n",
                   m_currViewNode.strViewName.c_str(),
                   m_currViewNode.strExtraInfo.c_str(),
                   m_currViewNode.viewStatus == VIEW_ON ? "ON" : "OFF");
@@ -656,7 +660,7 @@ void MsgHandler::EraseWarnViewNode(ViewNode viewNode)
 bool MsgHandler::EraseSeriousWarnListNode(ViewNode viewNode)
 {
     /* 严重报警 */
-    DebugPrint("---------> Debug 2\n");
+    DIAG_INFO("---------> Debug 2\n");
     bool isExist = false;
     std::lock_guard<std::mutex> lockGuard(m_mtxSerious);
     for (auto iter = m_seriousViewList.begin(); iter != m_seriousViewList.end(); iter++)
@@ -664,14 +668,14 @@ bool MsgHandler::EraseSeriousWarnListNode(ViewNode viewNode)
         ViewNode tempNode = (*iter);
         if (tempNode == viewNode)
         {
-            DebugPrint("---------> Debug 3\n");
+            DIAG_INFO("---------> Debug 3\n");
             m_seriousViewList.erase(iter);
             isExist = true;
             break;
         }
     }
 
-    DebugPrint("---------> Debug 4 [%s]\n", isExist ? "Exist" : "NOT Exist");
+    DIAG_INFO("---------> Debug 4 [%s]\n", isExist ? "Exist" : "NOT Exist");
     return isExist;
 }
 
@@ -849,7 +853,7 @@ int MsgHandler::AtLeastTimerInit()
     retCode = timer_create(CLOCK_MONOTONIC, &event, &this->m_timerId);
     if (retCode != EOK)
     {
-        ErrPrint("Failed to Create AtLeast Timer. ErrCode:[%s].\n", strerror(retCode));
+        DIAG_ERR("Failed to Create AtLeast Timer. ErrCode:[%s].\n", strerror(retCode));
         exit(1);
     }
 
@@ -879,7 +883,7 @@ int MsgHandler::AtLeastTimerStart()
     retCode = timer_settime(this->m_timerId, 0, &iTimer, NULL);
     if (retCode != EOK)
     {
-        ErrPrint("Failed to Set AtLeast Time. ErrCode:[%s].\n", strerror(retCode));
+        DIAG_ERR("Failed to Set AtLeast Time. ErrCode:[%s].\n", strerror(retCode));
     }
 
     return retCode;
@@ -908,7 +912,7 @@ int MsgHandler::AtLeastTimerStop()
     retCode = timer_settime(this->m_timerId, 0, &iTimer, NULL);
     if (retCode != EOK)
     {
-        ErrPrint("Failed to Set AtLeast Timer. ErrCode:[%s].\n", strerror(retCode));
+        DIAG_ERR("Failed to Set AtLeast Timer. ErrCode:[%s].\n", strerror(retCode));
     }
 
     ResetAtLeastFlag();
@@ -924,7 +928,7 @@ int MsgHandler::AtLeastTimerDelete()
     int retCode = timer_delete(this->m_timerId);
     if (retCode != EOK)
     {
-        ErrPrint("Failed to Delete AtLeast Timer. ErrCode:[%s].\n", strerror(retCode));
+        DIAG_ERR("Failed to Delete AtLeast Timer. ErrCode:[%s].\n", strerror(retCode));
     }
 
     return retCode;

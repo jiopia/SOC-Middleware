@@ -8,6 +8,7 @@ extern "C"
 
 SoudPlay::SoudPlay()
 {
+
 }
 
 SoudPlay::~SoudPlay()
@@ -17,7 +18,7 @@ SoudPlay::~SoudPlay()
 
 void SoudPlay::playWarning(std::string filename, int iLoop, std::string strFreq)
 {
-	InfoPrint("AudioName:[%s], iLoop:[%d], Freq:[%s]", filename.c_str(), iLoop, strFreq.c_str());
+	DIAG_INFO("AudioName:[%s], iLoop:[%d], Freq:[%s]", filename.c_str(), iLoop, strFreq.c_str());
 	if (GetAudioPlayThreadStatus() == AUDIO_STOP)
 	{
 		while (!m_isAudioPlayThExit)
@@ -36,7 +37,7 @@ void SoudPlay::AudioPlay(std::string audioFileName)
 {
 	audioFileName = std::string(MEDIA_PATH) + audioFileName;
 
-	// InfoPrint("AudioName:%s", audioFileName.c_str());
+	// DIAG_INFO("AudioName:%s", audioFileName.c_str());
 
 	// std::string strAudioPlayCmd = std::string("/bin/audioplay ") + audioFileName;
 	// system(strAudioPlayCmd.c_str());
@@ -48,7 +49,7 @@ void SoudPlay::AudioPlay(std::string audioFileName)
 
 	char fileName[64] = {0};
 	sprintf(fileName, "%s", audioFileName.c_str());
-	InfoPrint("fileName:%s", fileName);
+	DIAG_INFO("fileName:%s", fileName);
 	startPlayMedia(fileName);
 }
 
@@ -77,6 +78,11 @@ void SoudPlay::SetAudioPlayThreadStatus(AudioPlayStatus status)
 void SoudPlay::UpdataVehicalAccStatus(SoundSwitch status)
 {
 	std::lock_guard<std::mutex> lockGuard(m_mtxAccStatus);
+	if (status == SOUND_ON)
+	{
+		setVolume(4);
+	}
+
 	m_vehicleStatus = (status == SOUND_OFF) ? VEHICLE_OFF : VEHICLE_ON;
 }
 
@@ -86,9 +92,28 @@ VehicleAccStatus SoudPlay::GetVehicalAccStatus()
 	return m_vehicleStatus;
 }
 
+void SoudPlay::UpdataAudioCtrlAdscription(SoundSwitch status)
+{
+	std::lock_guard<std::mutex> lockGuard(m_mtxAudioCtrl);
+	if (status == SOUND_ON)
+	{
+		m_audioCtrlAdscription = AUDIO_CTRL_BELONG_TO_DHU;
+	}
+	else if (status == SOUND_OFF)
+	{
+		m_audioCtrlAdscription = AUDIO_CTRL_BELONG_TO_MCU;
+	}
+}
+
+AudioCtrlAdscription SoudPlay::GetAudioCtrlAdscription()
+{
+	std::lock_guard<std::mutex> lockGuard(m_mtxAudioCtrl);
+	return m_audioCtrlAdscription;
+}
+
 void SoudPlay::AudioPlayThread(std::string filename, int iLoop, std::string strFreq)
 {
-	CriticalPrint("Thread Id:[%lu]\n", std::hash<std::thread::id>()(std::this_thread::get_id()));
+	DIAG_INFO("Thread Id:[%lu]\n", std::hash<std::thread::id>()(std::this_thread::get_id()));
 
 	int iDelayMs = 1000;
 	int iToleranceMs = 0;
@@ -115,7 +140,8 @@ void SoudPlay::AudioPlayThread(std::string filename, int iLoop, std::string strF
 	}
 
 	while (iLoop-- &&
-		   GetAudioPlayThreadStatus() == AUDIO_START)
+		   GetAudioPlayThreadStatus() == AUDIO_START &&
+		   GetAudioCtrlAdscription() == AUDIO_CTRL_BELONG_TO_DHU)
 	{
 		AudioPlay(filename);
 		std::this_thread::sleep_for(std::chrono::milliseconds(iDelayMs));

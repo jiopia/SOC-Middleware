@@ -18,6 +18,7 @@ public:
 
 private:
 	void handleLogic(std::string strName, std::string strOnOff);
+	void AudioCtrlCheckThread();
 
 	JsonHandler *m_pJsonHandler = NULL;
 

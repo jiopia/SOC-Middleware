@@ -1,3 +1,13 @@
+/**
+ * @file CoreMsgHandler.hpp
+ * @author wangqijin (wangqijin@bdstar.com)
+ * @brief 
+ * @version 0.1
+ * @date 2021-06-08
+ * 
+ * @copyright Copyright (c) 2021
+ * 
+ */
 #ifndef _CORE_MSG_HANDLER_H_
 #define _CORE_MSG_HANDLER_H_
 
@@ -51,7 +61,9 @@ public:
 
     void E02_MsgReciever(ECPVehicleValue rData);
 
-    void E02_Request(uint32_t uiMsgType, uint32_t uiMsgId);
+    void E02_Request(uint32_t uiMsgType, uint32_t uiMsgId,
+                     uint8_t uchValue = 0x00,
+                     ECPCallBackType ecpCbType = ECP_TYPE_MCU, uint32_t ecpProtocal = GET_PROPDATA);
 
 private:
     void Run();
@@ -60,7 +72,7 @@ private:
 
     void MqttMsgProcessor(MsgData msgData);
 
-    void ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId);
+    void ProcessHMIRequest(uint32_t uiMsgType, uint32_t uiMsgId, uint8_t *uiMsgData, int iDataLen);
 
     void ActionMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
@@ -72,7 +84,7 @@ private:
 
     void SetupMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
-    void KeyMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
+    void KeyAndAudioCtrlMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
     void EOLMsgHandler(uint32_t uiMsgId, const unsigned char *ucMsgData, int iDataLen);
 
@@ -85,6 +97,9 @@ private:
     VehicleWorkData_t m_vehicleWorkData_t;
 
     VehicleAccStatus m_vehicleStatus = VEHICLE_DEFAULT;
+
+    std::mutex m_mtxAudioCtrl;
+    AudioCtrlAdscription m_audioCtrlAdscription = AUDIO_CTRL_BELONG_TO_MCU;
 
     std::mutex m_mtxPowerOff;
     bool m_isPowerOffNeedExec = false;
@@ -100,6 +115,8 @@ private:
     void SetPowerOffExecValid(bool isNeedExec);
     bool IsPowerOffNeedExec();
     void PowerOffTimerThread();
+
+    void McuHeartBeatThread();
 };
 
 #endif //!_CORE_MSG_HANDLER_H_

@@ -19,6 +19,7 @@
 #include <chrono>
 #include <sys/time.h>
 #include <time.h>
+#include "syslog_diag.h"
 
 using namespace std;
 
@@ -29,7 +30,7 @@ extern bool g_debugFlag;
 
 #define GET_BIT(data, pos) (((data) >> (pos)) & 1)
 
-#define NONE "\033[m\r\n"
+#define NONE "\033[m\n"
 #define RED "\033[0;32;31m"
 #define LIGHT_RED "\033[1;31m"
 #define GREEN "\033[0;32;32m"
@@ -106,11 +107,15 @@ extern bool g_debugFlag;
 
 inline void DebugPrintMsg(const unsigned char *ucMsgData, int iDataLen)
 {
-    printf("Message: ");
+    std::string strMsgPrint;
+    strMsgPrint += std::string("Message:");
     for (int index = 0; index < iDataLen; index++)
     {
-        printf(" [0x%02X]", ucMsgData[index]);
+        char byteDataBuff[4] = {0};
+        sprintf(byteDataBuff, " [0x%02X]", ucMsgData[index]);
+        strMsgPrint += std::string(byteDataBuff);
     }
+    DebugPrint("%s", strMsgPrint.c_str());
     printf(NONE);
 }
 
@@ -163,6 +168,23 @@ inline std::string UCharArrToStr(const unsigned char *chArr, const int len)
     }
 
     return strData;
+}
+
+inline int StrToUCharArr(unsigned char *dstUChArr, std::string strSrc)
+{
+    int iDataLen = 0;
+    if (strSrc.length() % 2 != 0)
+    {
+        return iDataLen;
+    }
+
+    for (int index = 0; index < strSrc.length(); index += 2)
+    {
+        dstUChArr[iDataLen] = strtol(strSrc.substr(index, 2).c_str(), 0, 16);
+        iDataLen++;
+    }
+
+    return iDataLen;
 }
 
 // 41 28 00 00 => 10.5

@@ -102,6 +102,8 @@ private:
     /* 告警信息是否全部隐藏的标志 */
     std::mutex m_mtxHideAll;
     bool m_isAllWarnHidden = false;
+
+    std::string m_strVehicleSpeed;
 };
 
 #endif // !_MSG_HANDLER_H_

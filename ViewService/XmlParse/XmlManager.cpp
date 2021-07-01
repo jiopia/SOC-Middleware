@@ -28,7 +28,7 @@ void XmlManager::XmlParse(const std::string &filename)
     TiXmlDocument xmlDoc;
     if (!xmlDoc.LoadFile(filename.c_str()))
     {
-        ErrPrint("Failed to load config file [%s]!!\n", filename.c_str());
+        DIAG_ERR("Failed to load config file [%s]!!\n", filename.c_str());
         exit(1);
     }
 
@@ -64,7 +64,7 @@ void XmlManager::XmlParse(const std::string &filename)
 
             if (!sonViewInfo->GetName().empty() && !sonViewInfo->GetExtraInfo().empty())
             {
-                // DebugPrint("Son View Name:[%s], Son View ExtraInfo:[%s]\n", sonViewInfo->GetName().c_str(), sonViewInfo->GetExtraInfo().c_str());
+                // DIAG_INFO("Son View Name:[%s], Son View ExtraInfo:[%s]\n", sonViewInfo->GetName().c_str(), sonViewInfo->GetExtraInfo().c_str());
                 //此处应该将子节点信息插入到父节点的ViewInfo中去
                 fatherViewInfo->PushChildViewName(sonViewInfo->GetName());
             }
@@ -72,7 +72,7 @@ void XmlManager::XmlParse(const std::string &filename)
 
         if (!fatherViewInfo->GetName().empty() && !fatherViewInfo->GetExtraInfo().empty())
         {
-            // InfoPrint("Father View Name:[%s], Father View ExtraInfo:[%s]\n", fatherViewInfo->GetName().c_str(), fatherViewInfo->GetExtraInfo().c_str());
+            // DIAG_INFO("Father View Name:[%s], Father View ExtraInfo:[%s]\n", fatherViewInfo->GetName().c_str(), fatherViewInfo->GetExtraInfo().c_str());
             m_configInfoMap.insert(std::make_pair(fatherViewInfo->GetName(), fatherViewInfo));
         }
     }

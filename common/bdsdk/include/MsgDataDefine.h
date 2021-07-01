@@ -16,14 +16,14 @@ enum VehicleAccStatus
 
 enum MType
 {
-    MTYPE_DUMMY = 0x00,       /* 未知消息类型 */
-    MTYPE_ACTION = 0x01,      /* Action类消息 */
-    MTYPE_DATA = 0x02,        /* DATA类消息 */
-    MTYPE_NODE_ALIVE = 0x03,  /* NodeAlive类消息 */
-    MTYPE_INTERACTIVE = 0x04, /* 交互类消息 */
-    MTYPE_SETUP = 0x05,       /* Setup类消息 */
-    MTYPE_KEY = 0x06,         /* Key类消息 */
-    MTYPE_EOL = 0x07,         /* 诊断类消息 */
+    MTYPE_DUMMY = 0x00,             /* 未知消息类型 */
+    MTYPE_ACTION = 0x01,            /* Action类消息 */
+    MTYPE_DATA = 0x02,              /* DATA类消息 */
+    MTYPE_NODE_ALIVE = 0x03,        /* NodeAlive类消息 */
+    MTYPE_INTERACTIVE = 0x04,       /* 交互类消息 */
+    MTYPE_SETUP = 0x05,             /* Setup类消息 */
+    MTYPE_KEY_AND_AUDIO_CTL = 0x06, /* Key类/音频控制权类消息 */
+    MTYPE_EOL = 0x07,               /* 诊断类消息 */
 };
 
 enum ActionMsgID
@@ -98,17 +98,19 @@ enum NodeAliveMsgID
 
 enum InteractiveMsgID
 {
-    MTYPE_INTERACTIVE_MSGID_MUSIC = 0x01,        //多媒体
-    MTYPE_INTERACTIVE_MSGID_PHONE = 0x02,        //电话
-    MTYPE_INTERACTIVE_MSGID_RADIO,               //收音机
-    MTYPE_INTERACTIVE_MSGID_BT,                  //蓝牙
+    MTYPE_INTERACTIVE_MSGID_MUSIC = 0x01, //多媒体
+    MTYPE_INTERACTIVE_MSGID_PHONE = 0x02, //电话
+    MTYPE_INTERACTIVE_MSGID_RADIO,        //收音机
+    MTYPE_INTERACTIVE_MSGID_BT,           //蓝牙
 };
 
 enum NavigationId
 {
     NAVIGATION_STATUS = 0x05,
     NAVIGATION_CROSSING_INDEX = 0x08,
-    NAVIGATION_NEXT_CROSSING_NAME = 0x0A
+    NAVIGATION_NEXT_CROSSING_NAME = 0x0A,
+    NAVIGATION_CAST_SCREEN_REQUEST = 0x0B, //投屏请求(MW->MCU)
+    NAVIGATION_CAST_SCREEN_RESPONSE = 0x0C //投屏响应(MCU->MW)
 };
 
 enum MusicSubId
@@ -145,9 +147,23 @@ enum SetUpMsgID
     MTYPE_SETUP_MSGID_CFG_LANG = 0x0C     //
 };
 
-enum KeyMsgID
+enum KeyAndAudioCtrlMsgID
 {
-    MTYPE_KEY_MSGID_KEY = 0x01, //按键
+    MTYPE_KEY_MSGID_KEY = 0x01,               //按键
+    MTYPE_AUDIO_CTRL_REQUEST_MSGID_KEY = 0x02, //音频控制权申请
+    MTYPE_AUDIO_CTRL_REPORT_MSGID_KEY = 0x03   //音频控制权状态
+};
+
+enum AudioCtrlModeReq
+{
+    AUDIO_CTRL_REQUEST = 0x01,
+    AUDIO_CTRL_RELEASE = 0x02
+};
+
+enum AudioCtrlAdscription
+{
+    AUDIO_CTRL_BELONG_TO_MCU = 0x01,
+    AUDIO_CTRL_BELONG_TO_DHU = 0x02
 };
 
 enum KeyStatus
