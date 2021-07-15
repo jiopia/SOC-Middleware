@@ -61,9 +61,11 @@ public:
 
     void E02_MsgReciever(ECPVehicleValue rData);
 
-    void E02_Request(uint32_t uiMsgType, uint32_t uiMsgId,
-                     uint8_t uchValue = 0x00,
-                     ECPCallBackType ecpCbType = ECP_TYPE_MCU, uint32_t ecpProtocal = GET_PROPDATA);
+    void E02_AsynGet(uint32_t uiMsgType, uint32_t uiMsgId, uint8_t uchValue = 0x00,
+                     ECPCallBackType ecpCbType = ECP_TYPE_MCU);
+
+    void E02_AsynSet(uint32_t uiMsgType, uint32_t uiMsgId, uint8_t uchValue = 0x00,
+                     ECPCallBackType ecpCbType = ECP_TYPE_MCU);
 
 private:
     void Run();
@@ -105,6 +107,9 @@ private:
     bool m_isPowerOffNeedExec = false;
 
 private:
+    void E02_Request(uint32_t uiMsgType, uint32_t uiMsgId, uint8_t uchValue = 0x00,
+                     ECPCallBackType ecpCbType = ECP_TYPE_MCU, uint32_t ecpProtocal = GET_PROPDATA);
+
     void SendViewPageInfo(std::string strViewName, std::string strExtraInfo, std::string strStatus);
     void SendAudioWarnInfo(std::string strAudioName, std::string strStatus);
     void SendFaultInfo();

@@ -1,0 +1,94 @@
+多媒体信息：
+[DEBUG][CoreProcessor]:[17:42:28]:[on_publish_callback]:[127]on_publish_callback
+[DEBUG][CoreProcessor]:[17:42:28]:[on_publish_callback]:[127]on_publish_callback
+[INFO][CoreProcessor]:[17:43:14]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[1]
+
+Message:  [0x02]
+[INFO][CoreProcessor]:[17:43:14]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[16]
+
+Message:  [0x03] [0xE8] [0xBF] [0xB7] [0xE4] [0xBA] [0xBA] [0xE7] [0x9A] [0x84] [0xE5] [0x8D] [0xB1] [0xE9] [0x99] [0xA9]
+//E8BFB7E4BABAE79A84E58DB1E999A9
+[INFO][CoreProcessor]:[17:43:14]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[30]
+
+Message:  [0x04] [0xE5] [0x88] [0x98] [0xE5] [0xB0] [0x8F] [0xE6] [0x96] [0xB0] [0x26] [0xE7] [0x88] [0xB1] [0xE4] [0xBB] [0x94] [0xE4] [0xBB] [0x94] [0x26] [0xE9] [0x83] [0xAD] [0xE6] [0x99] [0x93] [0xE6] [0x97] [0xAD]
+//E58898E5B08FE696B026E788B1E4BB94E4BB9426E983ADE69993E697AD
+[INFO][CoreProcessor]:[17:43:15]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[12]
+
+Message:  [0x01] [0x30] [0x30] [0x3A] [0x30] [0x32] [0x2F] [0x30] [0x32] [0x3A] [0x35] [0x36]
+//30303A30322F30323A3536
+[INFO][CoreProcessor]:[17:43:16]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[12]
+
+Message:  [0x01] [0x30] [0x30] [0x3A] [0x30] [0x33] [0x2F] [0x30] [0x32] [0x3A] [0x35] [0x36]
+[INFO][CoreProcessor]:[17:43:17]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[12]
+
+Message:  [0x01] [0x30] [0x30] [0x3A] [0x30] [0x34] [0x2F] [0x30] [0x32] [0x3A] [0x35] [0x36]
+[INFO][CoreProcessor]:[17:43:18]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[12]
+
+Message:  [0x01] [0x30] [0x30] [0x3A] [0x30] [0x35] [0x2F] [0x30] [0x32] [0x3A] [0x35] [0x36]
+[INFO][CoreProcessor]:[17:43:19]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[12]
+
+Message:  [0x01] [0x30] [0x30] [0x3A] [0x30] [0x36] [0x2F] [0x30] [0x32] [0x3A] [0x35] [0x36]
+[INFO][CoreProcessor]:[17:43:20]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[12]
+
+Message:  [0x01] [0x30] [0x30] [0x3A] [0x30] [0x37] [0x2F] [0x30] [0x32] [0x3A] [0x35] [0x36]
+[INFO][CoreProcessor]:[17:43:21]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[12]
+
+Message:  [0x01] [0x30] [0x30] [0x3A] [0x30] [0x38] [0x2F] [0x30] [0x32] [0x3A] [0x35] [0x36]
+[INFO][CoreProcessor]:[17:43:22]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[12]
+
+Message:  [0x01] [0x30] [0x30] [0x3A] [0x30] [0x39] [0x2F] [0x30] [0x32] [0x3A] [0x35] [0x36]
+[INFO][CoreProcessor]:[17:43:23]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[12]
+
+Message:  [0x01] [0x30] [0x30] [0x3A] [0x31] [0x30] [0x2F] [0x30] [0x32] [0x3A] [0x35] [0x36]
+[INFO][CoreProcessor]:[17:43:24]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[12]
+
+Message:  [0x01] [0x30] [0x30] [0x3A] [0x31] [0x31] [0x2F] [0x30] [0x32] [0x3A] [0x35] [0x36]
+[INFO][CoreProcessor]:[17:43:24]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[12]
+
+Message:  [0x01] [0x30] [0x30] [0x3A] [0x31] [0x31] [0x2F] [0x30] [0x32] [0x3A] [0x35] [0x36]
+[INFO][CoreProcessor]:[17:43:24]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x01], DataLen:[1]
+
+Message:  [0x00]
+
+
+导航信息
+[DEBUG][CoreProcessor]:[15:00:33]:[on_publish_callback]:[127]on_publish_callback
+[DEBUG][CoreProcessor]:[15:00:33]:[on_publish_callback]:[127]on_publish_callback
+[INFO][CoreProcessor]:[15:00:51]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x05], DataLen:[4]
+
+Message:  [0x01] [0x00] [0x00] [0x00]
+[INFO][CoreProcessor]:[15:00:51]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x08], DataLen:[4]
+
+Message:  [0x03] [0x00] [0x00] [0x00]
+[INFO][CoreProcessor]:[15:00:51]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x09], DataLen:[4]
+
+Message:  [0x01] [0x11] [0x00] [0x00]
+[INFO][CoreProcessor]:[15:00:51]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x09], DataLen:[4]
+
+Message:  [0x04] [0xA4] [0x01] [0x00]
+[INFO][CoreProcessor]:[15:00:51]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x09], DataLen:[4]
+
+Message:  [0x02] [0x2A] [0x06] [0x00]
+[INFO][CoreProcessor]:[15:00:51]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x08], DataLen:[4]
+
+Message:  [0x03] [0x00] [0x00] [0x00]
+[INFO][CoreProcessor]:[15:00:51]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x09], DataLen:[4]
+
+Message:  [0x04] [0xA4] [0x01] [0x00]
+[INFO][CoreProcessor]:[15:00:51]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x08], DataLen:[4]
+
+Message:  [0x03] [0x00] [0x00] [0x00]
+[INFO][CoreProcessor]:[15:00:51]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x09], DataLen:[4]
+
+Message:  [0x04] [0xA4] [0x01] [0x00]
+[INFO][CoreProcessor]:[15:00:51]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x08], DataLen:[4]
+
+Message:  [0x03] [0x00] [0x00] [0x00]
+[INFO][CoreProcessor]:[15:00:51]:[InteractiveMsgHandler]:[1270]Now Process Interactive Message. MsgId:[0x09], DataLen:[4]
+
+Message:  [0x04] [0x8A] [0x01] [0x00]
+
+
+
+
+

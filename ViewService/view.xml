@@ -19,11 +19,11 @@
 	<!-- 可调式超速报警 -->
 	<view name="speedlimit" pid="speedlimit" repeat="OFF" loop="5s" prority="2" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" audiobind="overspeed" least="1S" first="5s"/>
 	<!-- 挡位误操作 -->
-	<view name="WrongGear_P" pid="WrongGear_P"  freq="1HZ" repeat="OFF" loop="5s" prority="3" type="fault" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>	
+	<view name="WrongGear_P" pid="WrongGear_P"  freq="1HZ" repeat="OFF" loop="5s" prority="3" type="notice" notifyType="notifyOne" mutex="OFF" power="wm1" least="1S" first="5s"/>	
 	<!-- 小灯未关报警 -->
 	<view name="parking" pid="parking" freq="1HZ" repeat="ON" loop="5s" prority="4" type="notice" notifyType="notifyOne" mutex="OFF" audiobind="parking" power="wm2" least="1S" first="5s"/>
 	<!-- 燃油低报警 -->
-	<view name="oillow" pid="oillow"  freq="1HZ" repeat="OFF" loop="5s" prority="5" type="fault" notifyType="notifyOne" mutex="OFF" audiobind="oillow" power="wm1" least="1S" first="5s"/>	
+	<view name="oillow" pid="oillow"  freq="1HZ" repeat="OFF" loop="5s" prority="5" type="notice" notifyType="notifyOne" mutex="OFF" audiobind="oillow" power="wm1" least="1S" first="5s"/>	
 	<!-- PEPS1.1 未检测到智能钥匙 -->
 	<view name="pepsnotfindb" pid="pepsnotfindb" freq="1HZ" repeat="ON" loop="5s" prority="6" type="notice" notifyType="notifyOne" mutex="OFF" power="wm12" audiobind="pepsnotfindb" least="1S" first="5s"/>
 	<!-- PEPS3.1 智能钥匙电量低 -->

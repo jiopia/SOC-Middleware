@@ -1,0 +1,48 @@
+<!--
+参数解释：
+name：播放声音的名称，必须唯一。
+chime_id：音源文件名称枚举，参见aplay.h头文件。
+freq：频率，也可以理解为占空比。0HZ/1HZ/2HZ/4HZ/8HZ,其中0HZ代表长鸣。
+priority：优先级。
+power：电源模式，分为IG+/B+。
+loop：循环播放次数，-1代表无限循环。
+playmode：continue/replay。针对loop不为-1的情况下，continue代表低优先级被高优先级打断后，高优先级播放完成之后，继续播放低优先级剩下的次数。replay代表重新播放低优先级loop次数。
+stopmode：delay/immediately。delay代表播放音源后直到一个周期结束，immediately代表播放音源文件后立即停止。
+selfcheck：true/false。自检内是否需要响。
+remark：备注
+
+！！！添加声音时候，按照优先级的顺序来添加
+-->
+<audiotype>
+	<audio name="apa_error" 			 chime_id="CONST_GIP_AUD_8_5" freq="0HZ" priority="1" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="5" oninterrupt="false" remark="APA错误，长鸣5s不能被打断"/>
+	<audio name="radar_error" 			 chime_id="CONST_GIP_AUD_8_5" freq="0HZ" priority="1" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="5" oninterrupt="false" remark="雷达错误，长鸣5s不能被打断"/>
+	<audio name="radar_front_on" 		 chime_id="CONST_GIP_AUD_8_5" freq="0HZ" priority="2" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="前雷达长鸣，长鸣等待信号中断"/>
+	<audio name="radar_rear_on" 		 chime_id="CONST_GIP_AUD_8_5" freq="0HZ" priority="2" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="后雷达长鸣，长鸣等待信号中断"/>
+	<audio name="radar_front_8" 		 chime_id="CONST_GIP_AUD_8_4" freq="8HZ" priority="3" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="前雷达8HZ"/>
+	<audio name="radar_rear_8" 			 chime_id="CONST_GIP_AUD_8_4" freq="8HZ" priority="3" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="后雷达8HZ"/>
+	<audio name="radar_front_4" 		 chime_id="CONST_GIP_AUD_8_3" freq="4HZ" priority="4" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="前雷达4HZ"/>
+	<audio name="radar_rear_4" 			 chime_id="CONST_GIP_AUD_8_3" freq="4HZ" priority="4" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="后雷达4HZ"/>
+	<audio name="radar_front_2" 		 chime_id="CONST_GIP_AUD_8_2" freq="2HZ" priority="5" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="前雷达2HZ"/>
+	<audio name="radar_rear_2" 			 chime_id="CONST_GIP_AUD_8_2" freq="2HZ" priority="5" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="后雷达2HZ"/>
+	<audio name="radar_front_1"	  		 chime_id="CONST_GIP_AUD_8_1" freq="1HZ" priority="6" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="前雷达1HZ"/>
+	<audio name="radar_rear_1" 			 chime_id="CONST_GIP_AUD_8_1" freq="1HZ" priority="6" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="后雷达1HZ"/>
+	<audio name="apa_information" 		 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="7" power="IG+" loop="1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="APA提示信息请求"/>
+	<audio name="dooropen" 				 chime_id="CONST_GIP_AUD_6" freq="1HZ" priority="8" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>
+	<audio name="tire" 	   				 chime_id="CONST_GIP_AUD_6" freq="0HZ" priority="9" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>
+	<audio name="coolandtemperaturehigh" chime_id="CONST_GIP_AUD_3" freq="1HZ" priority="10" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>
+	<audio name="oilpressurelow" 		 chime_id="CONST_GIP_AUD_4" freq="2.5HZ" priority="11" power="IG+" loop="4" playmode="continue" stopmode="delay" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>
+	<audio name="handbrake" 			 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="12" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>
+	<audio name="drive_belt"   			 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="13" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="主驾驶员安全带未系"/>
+	<audio name="copilot_belt"  		 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="13" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="副驾驶安全带未系"/>
+	<audio name="turn_on" 				 chime_id="CONST_GIP_AUD_5_1" freq="1HZ" priority="14" power="B+" loop="1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="信号对应着ON"/>
+	<audio name="turn_off" 				 chime_id="CONST_GIP_AUD_5_2" freq="1HZ" priority="14" power="B+" loop="1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="信号对应着OFF"/>
+	<audio name="overspeed" 			 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="15" power="IG+" loop="3" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>
+	<audio name="ldw" 					 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="16" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>
+	<audio name="acc_takeoverreq" 		 chime_id="CONST_GIP_AUD_3" freq="0HZ" priority="17" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="acc安全距离"/>
+	<audio name="acc_pcw_latenwarning"	 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="18" power="IG+" loop="-1" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark="PCW预警"/>
+	<audio name="elec_sit_recall_memory" chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="19" power="B+" loop="1" playmode="continue" stopmode="delay" selfcheck="false" ontime="-1" oninterrupt="true" remark="recall/memory"/>
+	<audio name="elec_sit_keytone" 		 chime_id="CONST_GIP_AUD_1_3" freq="2HZ" priority="20" power="B+" loop="1" playmode="continue" stopmode="delay" selfcheck="false" ontime="-1" oninterrupt="true" remark="keytone"/>
+	<audio name="horn1" 			  	 chime_id="CONST_GIP_AUD_2" freq="1HZ" priority="21" power="B+" loop="4" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>
+	<audio name="horn2" 			  	 chime_id="CONST_GIP_AUD_2" freq="2.5HZ" priority="21" power="B+" loop="4" playmode="continue" stopmode="immediately" selfcheck="false" ontime="-1" oninterrupt="true" remark=""/>
+	<audio name="keyreminder"            chime_id="CONST_GIP_AUD_1_4" freq="0.5HZ" priority="19" power="B+" loop="-1" playmode="continue" stopmode="delay" selfcheck="false" ontime="-1" oninterrupt="true" remark="keyreminder"/>	
+</audiotype>
